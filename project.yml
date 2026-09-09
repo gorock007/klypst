@@ -1,0 +1,144 @@
+name: Klypst
+options:
+  bundleIdPrefix: com.klypst
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "26.6"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  defaultConfig: Debug
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES
+    DEVELOPMENT_TEAM: 9PXJ82UU32
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    GENERATE_INFOPLIST_FILE: NO
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+    Release:
+      SWIFT_COMPILATION_MODE: wholemodule
+
+packages:
+  KlypstCore:
+    path: KlypstCore
+
+targets:
+  Klypst:
+    type: application
+    platform: iOS
+    sources:
+      - path: Klypst
+        excludes:
+          - "Resources/PrivacyInfo.xcprivacy"
+      - path: Klypst/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - package: KlypstCore
+      - target: KlypstShareExtension
+    entitlements:
+      path: Klypst/Klypst.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.klypst.shared
+    info:
+      path: Klypst/Info.plist
+      properties:
+        CFBundleDisplayName: Klypst
+        CFBundleName: Klypst
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UIApplicationSupportsIndirectInputEvents: true
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHumanReadableCopyright: "© 2026 Klypst"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.klypst.app
+        PRODUCT_NAME: Klypst
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
+        ENABLE_PREVIEWS: YES
+
+  KlypstShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: KlypstShareExtension
+        excludes:
+          - "PrivacyInfo.xcprivacy"
+      - path: KlypstShareExtension/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - package: KlypstCore
+    entitlements:
+      path: KlypstShareExtension/KlypstShareExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.klypst.shared
+    info:
+      path: KlypstShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Klypst
+        CFBundleName: KlypstShareExtension
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+              NSExtensionActivationSupportsFileWithMaxCount: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.klypst.app.share
+        PRODUCT_NAME: KlypstShareExtension
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+
+  KlypstUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: KlypstUITests
+    dependencies:
+      - target: Klypst
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.klypst.app.uitests
+        TEST_TARGET_NAME: Klypst
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Klypst:
+    build:
+      targets:
+        Klypst: all
+        KlypstShareExtension: all
+        KlypstUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - package: KlypstCore/KlypstCoreTests
+        - KlypstUITests
+    archive:
+      config: Release
