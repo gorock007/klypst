@@ -26,10 +26,13 @@ struct PickClipIntent: AppIntent {
         }
     }
 
-    @Parameter(title: "Save First", description: "Optional. Pass the Clipboard variable to save what you last copied before picking.")
+    // Connected to the previous action (Get Clipboard) automatically; the Clip
+    // parameter is never auto-connected, otherwise Shortcuts wires the clipboard
+    // text into it, resolves it to an entity, and the picker is skipped.
+    @Parameter(title: "Save First", description: "Optional. Pass the Clipboard variable to save what you last copied before picking.", inputConnectionBehavior: .connectToPreviousIntentResult)
     var saveFirst: String?
 
-    @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.")
+    @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.", inputConnectionBehavior: .never)
     var clip: ClipEntity?
 
     @Parameter(title: "Show", description: "How many recent clips to offer.", default: 8, inclusiveRange: (1, 25))

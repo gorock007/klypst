@@ -8,7 +8,7 @@ struct HelpView: View {
                 Text("Copy anything, press the Action Button to save it. Press again to pick any earlier clip and paste it — without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts. Build this once:")
                 step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
                 step(2, "Add **Get Clipboard**.")
-                step(3, "Add **Pick a Clip** (search for Klypst). Tap the small arrow to expand it, tap **Save First**, choose **Select Variable**, and pick **Clipboard**.")
+                step(3, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it and check that **Save First** shows a **Clipboard** token and **Clip** is empty. If not, tap Save First → Select Variable → Clipboard, and clear Clip.")
                 step(4, "Add **Copy to Clipboard**. Its field should show the text from Pick a Clip; if not, tap it and choose that variable.")
                 step(5, "Name it **Klypst** and tap Done.")
                 step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
