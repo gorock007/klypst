@@ -19,7 +19,6 @@ struct ClipCardPanel<Rows: View>: View {
     let subtitle: LocalizedStringKey
     @ViewBuilder var rows: Rows
 
-    @Environment(\.colorScheme) private var colorScheme
     @ScaledMetric(relativeTo: .title3) private var logoSize = 44
 
     var body: some View {
@@ -30,16 +29,8 @@ struct ClipCardPanel<Rows: View>: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(alignment: .topTrailing) {
-            // Ambient warmth in the top trailing corner, never a banner.
-            RadialGradient(
-                colors: [ClipCard.orange.opacity(colorScheme == .dark ? 0.28 : 0.16), .clear],
-                center: .topTrailing,
-                startRadius: 0,
-                endRadius: 260
-            )
-            .allowsHitTesting(false)
-        }
+        // No background of our own: the system sheet clips content to its own
+        // shape, so any tint we draw shows a hard rectangular edge at the corner.
     }
 
     private var header: some View {
@@ -71,7 +62,7 @@ struct ClipCardRow: View {
     var isHighlighted = false
     var showsDivider = true
 
-    @ScaledMetric(relativeTo: .body) private var tileSize = 42
+    @ScaledMetric(relativeTo: .subheadline) private var tileSize = 36
 
     private var style: ClipDisplayStyle { clip.displayStyle }
     private let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -82,34 +73,33 @@ struct ClipCardRow: View {
                 ClipKindTile(style: style, thumbnailURL: clip.thumbnailURL, isHighlighted: isHighlighted, size: tileSize)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(clip.preview)
-                        .font(.body)
+                        .font(.subheadline)
                         .lineLimit(1)
                         .truncationMode(.tail)
                         .foregroundStyle(.primary)
-                    HStack(spacing: 4) {
+                    HStack(spacing: 3) {
                         if clip.isPinned {
                             Image(systemName: "pin.fill")
-                                .font(.caption2)
                                 .foregroundStyle(ClipCard.orange)
                         }
                         Text("\(style.displayName) · \(clip.lastUsedAt.formatted(.relative(presentation: .named)))")
                             .lineLimit(1)
                     }
-                    .font(.footnote)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
                 if isHighlighted {
                     Image(systemName: "checkmark")
-                        .font(.footnote.weight(.bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
-                        .frame(width: 24, height: 24)
+                        .frame(width: 22, height: 22)
                         .background(ClipCard.orange, in: Circle())
                         .accessibilityHidden(true)
                 }
             }
             .padding(.horizontal, isHighlighted ? 8 : 0)
-            .padding(.vertical, 10)
+            .padding(.vertical, 9)
             .background {
                 if isHighlighted {
                     shape.fill(ClipCard.orange.opacity(0.13))
@@ -132,9 +122,9 @@ struct ClipKindTile: View {
     let style: ClipDisplayStyle
     let thumbnailURL: URL?
     let isHighlighted: Bool
-    var size: CGFloat = 42
+    var size: CGFloat = 36
 
-    private let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
+    private let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
 
     var body: some View {
         Group {
