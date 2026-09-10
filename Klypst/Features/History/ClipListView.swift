@@ -328,18 +328,38 @@ struct ClipContextMenu: View {
 
 /// History empty state: one of the few places the mascot appears (brand §4, §14).
 struct EmptyHistoryView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            VStack(spacing: 0) {
+                Spacer()
+                content
+                Spacer()
+                Spacer()
+            }
+            ScrollView {
+                content.padding(.vertical, 24)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
-            Spacer()
-            MascotView(height: 150)
+            MascotView(height: dynamicTypeSize.isAccessibilitySize ? 100 : 150)
                 .padding(.bottom, 28)
             Text("Nothing here yet.")
                 .font(.title2.bold())
                 .foregroundStyle(Color.brandInk)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             Text("Copy something and save it. It’ll be here when you need it.")
                 .font(.body)
                 .foregroundStyle(Color.brandInkSecondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 8)
                 .padding(.horizontal, 40)
             NavigationLink { HelpView() } label: {
@@ -349,10 +369,6 @@ struct EmptyHistoryView: View {
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
             .padding(.top, 20)
-            Spacer()
-            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .contain)
     }
 }

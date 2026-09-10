@@ -6,6 +6,7 @@ struct OnboardingView: View {
     @State private var page = 0
     @State private var mascotShown = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let pages: [Page] = [
         Page(
@@ -78,37 +79,59 @@ struct OnboardingView: View {
 
     // MARK: Pieces
 
+    /// Fills the page when it fits; scrolls at large Dynamic Type sizes.
     private func pageView(_ item: Page) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Spacer(minLength: 24)
-            HStack {
-                Spacer()
-                switch item.visual {
-                case .mascot:
-                    MascotView(height: 230)
-                        .scaleEffect(mascotShown ? 1 : 0.9)
-                        .opacity(mascotShown ? 1 : 0)
-                case .glyph(let symbol):
-                    CardStackGlyph(symbol: symbol, size: 128)
-                }
-                Spacer()
+        ViewThatFits(in: .vertical) {
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer(minLength: 24)
+                visual(item)
+                Spacer(minLength: 24)
+                copyBlock(item)
             }
-            Spacer(minLength: 24)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    visual(item)
+                    copyBlock(item)
+                }
+                .padding(.top, 16)
+            }
+        }
+        .padding(.horizontal, 28)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var isAccessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
+
+    private func visual(_ item: Page) -> some View {
+        HStack {
+            Spacer()
+            switch item.visual {
+            case .mascot:
+                MascotView(height: isAccessibilitySize ? 140 : 230)
+                    .scaleEffect(mascotShown ? 1 : 0.9)
+                    .opacity(mascotShown ? 1 : 0)
+            case .glyph(let symbol):
+                CardStackGlyph(symbol: symbol, size: isAccessibilitySize ? 88 : 128)
+            }
+            Spacer()
+        }
+    }
+
+    private func copyBlock(_ item: Page) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
             Text(item.title)
-                .font(.largeTitle.bold())
+                .font(isAccessibilitySize ? .title.bold() : .largeTitle.bold())
                 .kerning(-0.5)
                 .foregroundStyle(Color.brandInk)
                 .fixedSize(horizontal: false, vertical: true)
             Text(item.body)
-                .font(.title3)
+                .font(isAccessibilitySize ? .body : .title3)
                 .foregroundStyle(Color.brandInkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 10)
                 .padding(.bottom, 24)
         }
-        .padding(.horizontal, 28)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 
     private var pageIndicator: some View {
