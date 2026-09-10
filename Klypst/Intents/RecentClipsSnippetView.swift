@@ -10,7 +10,7 @@ struct RecentClipsSnippetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Klypst", systemImage: "clipboard")
+                Label("Klypst", systemImage: "square.stack")
                     .font(.headline)
                 Spacer()
                 Text("Tap to copy")
@@ -69,7 +69,7 @@ private struct SnippetRow: View {
             }
             Spacer(minLength: 4)
             Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
-                .foregroundStyle(isCopied ? Color.green : Color.secondary)
+                .foregroundStyle(isCopied ? Color.accentColor : Color.secondary)
                 .accessibilityHidden(true)
         }
         .padding(.vertical, 6)

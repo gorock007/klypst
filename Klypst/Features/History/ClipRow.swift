@@ -18,7 +18,9 @@ struct ClipRow: View {
                     Text(summary.lastUsedAt, style: .relative)
                     if summary.isPinned {
                         Text("·")
-                        Image(systemName: "pin.fill").accessibilityLabel("Pinned")
+                        Image(systemName: "pin.fill")
+                            .foregroundStyle(Color.accentColor)
+                            .accessibilityLabel("Pinned")
                     }
                 }
                 .font(.caption)
@@ -35,13 +37,15 @@ struct ClipRow: View {
         if summary.kind == .image, let url = summary.thumbnailURL {
             ThumbnailView(url: url)
                 .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.tile, style: .continuous))
                 .accessibilityHidden(true)
         } else {
+            // A small "card" tile: the stack geometry, quietly.
             Image(systemName: summary.kind.systemImageName)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .frame(width: 32, height: 32)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.brandInkSecondary)
+                .frame(width: 36, height: 36)
+                .background(Color.brandSurfaceRaised, in: RoundedRectangle(cornerRadius: Brand.Radius.tile, style: .continuous))
                 .accessibilityHidden(true)
         }
     }

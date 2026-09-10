@@ -8,6 +8,9 @@ struct ClipListView: View {
     @State private var selection = Set<UUID>()
     @State private var showDeleteAllConfirmation = false
     @State private var showDeleteSelectedConfirmation = false
+    /// Row briefly lifted after a copy (brand motion: "selected card subtly lifts/snaps").
+    @State private var liftedID: UUID?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(mode: ClipListModel.Mode) {
         _model = State(initialValue: ClipListModel(mode: mode))
@@ -42,15 +45,21 @@ struct ClipListView: View {
     @ViewBuilder
     private var content: some View {
         if !model.hasLoaded {
-            ProgressView().accessibilityLabel("Loading clips")
+            ProgressView()
+                .accessibilityLabel("Loading clips")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .brandCanvas()
         } else if model.loadFailed {
-            ContentUnavailableView("Couldn’t Load Clips", systemImage: "exclamationmark.triangle", description: Text("Pull to try again."))
+            ContentUnavailableView("Couldn’t load clips", systemImage: "exclamationmark.triangle", description: Text("Pull to try again."))
+                .brandCanvas()
         } else if model.items.isEmpty {
             emptyState
+                .brandCanvas()
         } else {
             List(selection: $selection) {
                 if model.mode == .history, state.showsClipboardNudge, !isEditing, !model.isSearching {
                     ClipboardNudgeCard()
+                        .listRowBackground(Color.brandBackground)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .selectionDisabled()
@@ -59,6 +68,8 @@ struct ClipListView: View {
                     NavigationLink(value: summary) {
                         ClipRow(summary: summary)
                     }
+                    .listRowBackground(liftedID == summary.id ? Color.accentColor.opacity(0.12) : Color.brandBackground)
+                    .scaleEffect(liftedID == summary.id && !reduceMotion ? 1.02 : 1)
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button { copy(summary) } label: { Label("Copy", systemImage: "doc.on.doc") }
                             .tint(.accentColor)
@@ -68,12 +79,14 @@ struct ClipListView: View {
                         Button { togglePin(summary) } label: {
                             Label(summary.isPinned ? "Unpin" : "Pin", systemImage: summary.isPinned ? "pin.slash" : "pin")
                         }
-                        .tint(.orange)
+                        .tint(Color.brandInkSecondary)
                     }
                     .contextMenu { ClipContextMenu(summary: summary) }
                 }
             }
             .listStyle(.plain)
+            .brandListCanvas()
+            .animation(reduceMotion ? nil : Brand.Motion.snap, value: liftedID)
         }
     }
 
@@ -82,15 +95,9 @@ struct ClipListView: View {
         if model.isSearching {
             ContentUnavailableView.search(text: model.query)
         } else if model.mode == .pinned {
-            ContentUnavailableView("No Pinned Clips", systemImage: "pin", description: Text("Pin a clip to keep it from expiring and find it here."))
+            ContentUnavailableView("Nothing pinned yet.", systemImage: "pin", description: Text("Pin a clip to keep it from expiring. It’ll show up here."))
         } else {
-            ContentUnavailableView {
-                Label("No Clips Yet", systemImage: "clipboard")
-            } description: {
-                Text("Copy something in any app, then tap **Save Clipboard** below. For one-press capture, set up the Action Button in Help.")
-            } actions: {
-                NavigationLink { HelpView() } label: { Text("Help & Setup") }
-            }
+            EmptyHistoryView()
         }
     }
 
@@ -159,6 +166,7 @@ struct ClipListView: View {
     // MARK: Actions
 
     private func copy(_ summary: ClipSummary) {
+        lift(summary.id)
         Task {
             do {
                 try await AppEnvironment.shared.copyClip(id: summary.id)
@@ -203,6 +211,17 @@ struct ClipListView: View {
         }
     }
 
+    /// Lift the copied card for a beat, then let it settle.
+    private func lift(_ id: UUID) {
+        liftedID = id
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            if liftedID == id {
+                withAnimation(reduceMotion ? nil : Brand.Motion.settle) { liftedID = nil }
+            }
+        }
+    }
+
     private func togglePin(_ summary: ClipSummary) {
         Task { try? await AppEnvironment.shared.setPinned(id: summary.id, !summary.isPinned) }
     }
@@ -231,9 +250,11 @@ struct ClipboardNudgeCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "sparkles")
+            Image(systemName: "doc.on.clipboard")
                 .font(.title3)
                 .foregroundStyle(Color.accentColor)
+                .frame(width: 36, height: 36)
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: Brand.Radius.tile, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text("You copied something new")
@@ -256,7 +277,11 @@ struct ClipboardNudgeCard: View {
             .accessibilityLabel("Save copied content")
         }
         .padding(12)
-        .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(Color.brandSurface, in: RoundedRectangle(cornerRadius: Brand.Radius.card, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: Brand.Radius.card, style: .continuous)
+                .strokeBorder(Color.brandSeparator, lineWidth: 1)
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -298,5 +323,36 @@ struct ClipContextMenu: View {
         Button(role: .destructive) {
             Task { try? await AppEnvironment.shared.delete(id: summary.id) }
         } label: { Label("Delete", systemImage: "trash") }
+    }
+}
+
+/// History empty state: one of the few places the mascot appears (brand §4, §14).
+struct EmptyHistoryView: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            MascotView(height: 150)
+                .padding(.bottom, 28)
+            Text("Nothing here yet.")
+                .font(.title2.bold())
+                .foregroundStyle(Color.brandInk)
+            Text("Copy something and save it. It’ll be here when you need it.")
+                .font(.body)
+                .foregroundStyle(Color.brandInkSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+                .padding(.horizontal, 40)
+            NavigationLink { HelpView() } label: {
+                Text("Help & Setup")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .padding(.top, 20)
+            Spacer()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
     }
 }

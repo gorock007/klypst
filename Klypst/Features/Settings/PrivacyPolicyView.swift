@@ -38,6 +38,7 @@ struct PrivacyPolicyView: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .brandCanvas()
         .navigationTitle("Privacy Policy")
         .navigationBarTitleDisplayMode(.inline)
     }

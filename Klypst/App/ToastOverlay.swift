@@ -9,7 +9,11 @@ struct ToastOverlayModifier: ViewModifier {
         content
             .overlay(alignment: .bottom) {
                 if let toast = state.toast {
-                    Label(toast.message, systemImage: toast.isSuccess ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                    HStack(spacing: 8) {
+                        Image(systemName: toast.isSuccess ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                            .foregroundStyle(toast.isSuccess ? Color.accentColor : Color.red)
+                        Text(toast.message)
+                    }
                         .font(.callout.weight(.medium))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)

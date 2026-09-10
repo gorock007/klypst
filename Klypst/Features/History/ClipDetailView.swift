@@ -21,6 +21,8 @@ struct ClipDetailView: View {
                 ProgressView()
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .brandCanvas()
         .navigationTitle(content?.kind.displayName ?? "Clip")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: state.changeToken) { await load() }
@@ -56,25 +58,30 @@ struct ClipDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 switch content.kind {
                 case .text:
-                    Text(content.text ?? "")
-                        .font(.body)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    card {
+                        Text(content.text ?? "")
+                            .font(.body)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 case .url:
                     if let url = content.url {
-                        Link(destination: url) {
-                            Label(url.absoluteString, systemImage: "safari")
-                                .font(.body)
-                                .multilineTextAlignment(.leading)
+                        card {
+                            Link(destination: url) {
+                                Label(url.absoluteString, systemImage: "safari")
+                                    .font(.body)
+                                    .multilineTextAlignment(.leading)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .accessibilityHint("Opens in your browser")
                         }
-                        .accessibilityHint("Opens in your browser")
                     }
                 case .image:
                     if let image {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.card, style: .continuous))
                             .accessibilityLabel("Saved image")
                     } else {
                         ProgressView().frame(maxWidth: .infinity)
@@ -85,6 +92,17 @@ struct ClipDetailView: View {
             }
             .padding()
         }
+    }
+
+    /// The clip as the "front card" of the stack.
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .padding(16)
+            .background(Color.brandSurface, in: RoundedRectangle(cornerRadius: Brand.Radius.card, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: Brand.Radius.card, style: .continuous)
+                    .strokeBorder(Color.brandSeparator, lineWidth: 1)
+            }
     }
 
     private func metadata(_ content: ClipContent) -> some View {

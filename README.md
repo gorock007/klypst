@@ -2,7 +2,9 @@
 
 A privacy-first iPhone clipboard utility for iOS 26. Capture → remember → summon → select → paste, using only Apple-supported, user-initiated surfaces: the main app, App Intents / App Shortcuts, the Action Button, an iOS 26 interactive snippet, and a Share Extension.
 
-Source documents: `docs/PRD.md` and `docs/architecture.md`.
+Source documents: `docs/PRD.md` (what), `docs/architecture.md` (how) and `docs/brand.md` (look, feel, voice).
+
+Brand in code: color tokens are asset-catalog colorsets (`BrandBackground` (white / near-black), `BrandSurface`, `BrandInk`, … plus the orange `AccentColor`), and `Klypst/App/Brand.swift` holds radii, motion, the mascot view, the card-stack glyph and the primary button style. The mascot (`Mascot` imageset, light/dark) appears only in onboarding, the empty history state and Settings.
 
 ## Layout
 
@@ -13,6 +15,7 @@ Klypst/                     Main app (SwiftUI, App Intents, snippet)
   Intents/                  SaveCurrentClipboard, SaveClip (Shortcuts input), ShowRecentClips (+ snippet), CopyClip, ClipEntity, App Shortcuts
   Resources/                Assets, PrivacyInfo.xcprivacy
 KlypstShareExtension/       Share Sheet extension (UIKit, no marketing UI)
+brand/                      Canonical brand assets (mascot master/flat, app icon masters)
 KlypstCore/                 Swift package shared by every target
   Domain/                   ClipKind, ClipSummary/ClipContent/ClipInput, ClipRepository, SystemClipboard, RetentionPolicy
   Persistence/              SwiftData versioned schema, SharedModelContainerFactory, SwiftDataClipRepository, KlypstStore

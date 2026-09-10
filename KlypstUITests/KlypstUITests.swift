@@ -85,7 +85,7 @@ final class KlypstUITests: XCTestCase {
 
     func testEmptyStateAndSettings() {
         launchPastOnboarding()
-        XCTAssertTrue(app.staticTexts["No Clips Yet"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Nothing here yet."].waitForExistence(timeout: 5))
 
         app.tabBars.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))

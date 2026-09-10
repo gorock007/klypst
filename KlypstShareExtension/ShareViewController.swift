@@ -128,7 +128,8 @@ final class ShareViewController: UIViewController {
         spinner.isHidden = true
         icon.isHidden = false
         icon.image = UIImage(systemName: outcome.symbolName)
-        icon.tintColor = outcome.isSuccess ? .systemGreen : .systemOrange
+        // Brand orange (#FF5A36) marks copy/save success; the catalog isn't in this target.
+        icon.tintColor = outcome.isSuccess ? UIColor(red: 1.0, green: 0.353, blue: 0.212, alpha: 1) : .systemRed
         statusLabel.text = outcome.message
         UIAccessibility.post(notification: .announcement, argument: outcome.message)
         let generator = UINotificationFeedbackGenerator()

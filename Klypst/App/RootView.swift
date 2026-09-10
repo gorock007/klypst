@@ -30,7 +30,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            SwiftUI.Tab("History", systemImage: "clock", value: .history) {
+            SwiftUI.Tab("History", systemImage: "square.stack", value: .history) {
                 ClipListView(mode: .history)
             }
             SwiftUI.Tab("Pinned", systemImage: "pin", value: .pinned) {
@@ -65,6 +65,7 @@ struct StoreUnavailableView: View {
         } description: {
             Text("Klypst couldn’t open its local storage. Restart the app. If this keeps happening, reinstall Klypst.")
         }
+        .brandCanvas()
     }
 }
 
