@@ -7,6 +7,11 @@ options:
   createIntermediateGroups: true
   groupSortPosition: top
   defaultConfig: Debug
+  fileTypes:
+    # Icon Composer bundle: hand to actool via the resources phase, like .xcassets.
+    icon:
+      file: true
+      buildPhase: resources
 
 settings:
   base:

@@ -16,6 +16,7 @@ Klypst/                     Main app (SwiftUI, App Intents, snippet)
   Resources/                Assets, PrivacyInfo.xcprivacy
 KlypstShareExtension/       Share Sheet extension (UIKit, no marketing UI)
 brand/                      Canonical brand assets (mascot master/flat, app icon masters)
+Klypst/Resources/AppIcon.icon  Icon Composer bundle (layered iOS 26 icon; the .appiconset is the flat fallback)
 KlypstCore/                 Swift package shared by every target
   Domain/                   ClipKind, ClipSummary/ClipContent/ClipInput, ClipRepository, SystemClipboard, RetentionPolicy
   Persistence/              SwiftData versioned schema, SharedModelContainerFactory, SwiftDataClipRepository, KlypstStore
