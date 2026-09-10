@@ -68,14 +68,24 @@ final class AppEnvironment {
     }
 
     /// Writes a stored clip to the pasteboard and refreshes its recency.
-    func copyClip(id: UUID) async throws {
+    /// Returns false when the system discarded the write (this happens for
+    /// backgrounded processes); `changeCount` is the only reliable signal.
+    @discardableResult
+    func copyClip(id: UUID) async throws -> Bool {
         guard let repository else { throw ClipRepositoryError.storeUnavailable }
         guard let content = try await repository.clip(id: id) else { throw ClipRepositoryError.notFound }
+        let before = UIPasteboard.general.changeCount
         try clipboard.write(content)
-        try await repository.markUsed(id: id)
-        state.lastCopiedClipID = id
-        markClipboardSeen()
-        state.bumpChangeToken()
+        let tookEffect = UIPasteboard.general.changeCount != before
+        if tookEffect {
+            try await repository.markUsed(id: id)
+            state.lastCopiedClipID = id
+            markClipboardSeen()
+            state.bumpChangeToken()
+        } else {
+            KlypstLog.clipboard.error("Pasteboard write did not change changeCount; treating as discarded.")
+        }
+        return tookEffect
     }
 
     /// Copies several clips as one newline-separated text. Images are skipped.

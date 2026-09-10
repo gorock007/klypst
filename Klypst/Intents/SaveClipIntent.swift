@@ -6,10 +6,13 @@ import KlypstCore
 /// possible: a user shortcut does "Get Clipboard → Save to Klypst → Recent Clips",
 /// and Shortcuts (a privileged system app) supplies the clipboard content, so
 /// Klypst itself never reads the pasteboard in the background.
+///
+/// Silent by design: it is usually one step in a chain, so it shows no dialog
+/// and treats an empty clipboard as a no-op rather than an error.
 struct SaveClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Save to Klypst"
     static let description = IntentDescription(
-        "Saves text, a link, or an image into Klypst. Pass the Clipboard variable to save whatever you last copied.",
+        "Saves text, a link, or an image into Klypst. Pass the Clipboard variable to save whatever you last copied. Returns the saved clip.",
         categoryName: "Capture",
         searchKeywords: ["clipboard", "clip", "copy", "link"]
     )
@@ -37,7 +40,7 @@ struct SaveClipIntent: AppIntent {
     }
 
     @MainActor
-    func perform() async throws -> some IntentResult & ReturnsValue<ClipEntity> & ProvidesDialog {
+    func perform() async throws -> some IntentResult & ReturnsValue<ClipEntity?> {
         guard let repository = AppEnvironment.shared.repository else { throw KlypstIntentError.storeUnavailable }
 
         let input: ClipInput
@@ -46,7 +49,8 @@ struct SaveClipIntent: AppIntent {
         } else if !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             input = .text(content, via: .intent)
         } else {
-            throw KlypstIntentError.nothingToSave
+            KlypstLog.intents.info("Save intent received nothing to save.")
+            return .result(value: nil)
         }
 
         let result: SaveResult
@@ -62,9 +66,9 @@ struct SaveClipIntent: AppIntent {
         switch result {
         case .saved(let summary):
             KlypstLog.intents.info("Save intent stored a \(summary.kind.rawValue, privacy: .public) clip.")
-            return .result(value: ClipEntity(summary: summary), dialog: "Saved to Klypst.")
+            return .result(value: ClipEntity(summary: summary))
         case .duplicate(let summary):
-            return .result(value: ClipEntity(summary: summary), dialog: "Already in Klypst — moved it to the top.")
+            return .result(value: ClipEntity(summary: summary))
         case .rejected(let reason):
             throw KlypstIntentError.saveRejected(reason.message)
         }

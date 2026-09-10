@@ -47,7 +47,7 @@ struct HelpView: View {
 
             Section {
                 step(1, "Press the Action Button, or run **Recent Clips** from Shortcuts, Siri or Spotlight.")
-                step(2, "Tap a clip. It becomes your clipboard.")
+                step(2, "Tap a clip. It becomes your clipboard. If iOS blocks copying in the background, Klypst opens for a moment and says **Copied** — swipe back to the app you were in.")
                 step(3, "Paste in any app.")
                 Text("To send several clips at once, open Klypst, choose **Select Clips** from the ••• menu, pick them, and tap **Copy**. They’re copied as one text, one per line.")
                 SiriTipView(intent: ShowRecentClipsIntent())
@@ -58,7 +58,21 @@ struct HelpView: View {
             }
 
             Section {
-                Text("Klypst adds four actions to the Shortcuts app and Siri: **Recent Clips**, **Save Clipboard**, **Save to Klypst** (takes text, a link or an image) and **Copy Clip**. The last two appear when you add an action and search for Klypst.")
+                Text("Prefer a picker that never leaves the app you’re in? Build this shortcut instead. Shortcuts does the copying itself, so nothing opens:")
+                step(1, "**Get Clipboard**")
+                step(2, "**Save to Klypst** with the Clipboard variable")
+                step(3, "**Get Recent Clips**")
+                step(4, "**Choose from List** (uses the clips from step 3)")
+                step(5, "**Get Clip Text** (uses the chosen item)")
+                step(6, "**Copy to Clipboard** (uses the text from step 5)")
+            } header: {
+                Text("Alternative: pick-and-copy entirely in Shortcuts")
+            } footer: {
+                Text("Image clips can’t be returned as text in this recipe; copy those from the Klypst app.")
+            }
+
+            Section {
+                Text("Klypst adds these actions to the Shortcuts app and Siri: **Recent Clips**, **Save Clipboard**, **Save to Klypst**, **Copy Clip**, **Get Recent Clips** and **Get Clip Text**. All but the first two appear when you add an action and search for Klypst.")
             } header: {
                 Text("Shortcuts & Siri")
             }
