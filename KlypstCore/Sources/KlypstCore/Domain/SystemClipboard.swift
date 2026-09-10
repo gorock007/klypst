@@ -9,7 +9,9 @@ public protocol SystemClipboard: Sendable {
     /// Returns nil when the pasteboard holds nothing we support.
     @MainActor func readUserInitiatedContent() async throws -> ClipInput?
     /// Writes a stored clip back to the general pasteboard.
-    @MainActor func write(_ content: ClipContent) throws
+    @MainActor func write(_ content: ClipContent, options: PasteboardWriteOptions) throws
+    /// Writes plain text (for example several clips joined together) to the general pasteboard.
+    @MainActor func writeText(_ text: String, options: PasteboardWriteOptions) throws
 }
 
 public enum SystemClipboardError: Error, Sendable {

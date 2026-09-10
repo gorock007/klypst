@@ -10,6 +10,8 @@ public struct PreferencesStore: Sendable {
         public static let lastPurgeAt = "lastPurgeAt"
         public static let saveCount = "saveCount"
         public static let lastSeenPasteboardChangeCount = "lastSeenPasteboardChangeCount"
+        public static let allowsUniversalClipboard = "allowsUniversalClipboard"
+        public static let pasteboardExpiry = "pasteboardExpiry"
     }
 
     private let suiteName: String?
@@ -48,8 +50,32 @@ public struct PreferencesStore: Sendable {
         nonmutating set { defaults.set(newValue, forKey: Key.lastSeenPasteboardChangeCount) }
     }
 
+    /// When false (the default), clips copied from Klypst are written `localOnly` and never
+    /// leave this device through Universal Clipboard.
+    public var allowsUniversalClipboard: Bool {
+        get { defaults.bool(forKey: Key.allowsUniversalClipboard) }
+        nonmutating set { defaults.set(newValue, forKey: Key.allowsUniversalClipboard) }
+    }
+
+    /// How long a clip copied from Klypst stays on the pasteboard before iOS clears it.
+    public var pasteboardExpiry: PasteboardExpiry {
+        get {
+            guard defaults.object(forKey: Key.pasteboardExpiry) != nil else { return .default }
+            return PasteboardExpiry(rawValue: defaults.integer(forKey: Key.pasteboardExpiry)) ?? .default
+        }
+        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.pasteboardExpiry) }
+    }
+
+    /// The options every pasteboard write should use, derived from the two settings above.
+    public var pasteboardWriteOptions: PasteboardWriteOptions {
+        PasteboardWriteOptions(isLocalOnly: !allowsUniversalClipboard, expiry: pasteboardExpiry)
+    }
+
     public func reset() {
-        for key in [Key.retentionPolicy, Key.hasCompletedOnboarding, Key.lastPurgeAt, Key.saveCount, Key.lastSeenPasteboardChangeCount] {
+        for key in [
+            Key.retentionPolicy, Key.hasCompletedOnboarding, Key.lastPurgeAt, Key.saveCount,
+            Key.lastSeenPasteboardChangeCount, Key.allowsUniversalClipboard, Key.pasteboardExpiry,
+        ] {
             defaults.removeObject(forKey: key)
         }
     }

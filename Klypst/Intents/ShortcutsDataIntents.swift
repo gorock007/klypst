@@ -71,3 +71,30 @@ struct GetClipTextIntent: AppIntent {
         }
     }
 }
+
+/// Returns an image clip as a file for use in other actions (Copy to Clipboard, Save to Photos…).
+struct GetClipImageIntent: AppIntent {
+    static let title: LocalizedStringResource = "Get Clip Image"
+    static let description = IntentDescription(
+        "Returns an image clip as an image. Text and link clips can’t be returned as images.",
+        categoryName: "Retrieve"
+    )
+    static let supportedModes: IntentModes = .background
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Get image of \(\.$clip)")
+    }
+
+    @Parameter(title: "Clip")
+    var clip: ClipEntity
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
+        guard let repository = AppEnvironment.shared.repository else { throw KlypstIntentError.storeUnavailable }
+        guard let content = try await repository.clip(id: clip.id) else { throw KlypstIntentError.clipNotFound }
+        let file = try ClipImageFile.make(from: content)
+        try? await repository.markUsed(id: clip.id)
+        return .result(value: file)
+    }
+}

@@ -90,8 +90,17 @@ final class KlypstUITests: XCTestCase {
         app.tabBars.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         snap("06-settings")
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "On this device only")).firstMatch.exists)
-        app.buttons["Privacy Policy"].tap()
+        // The Privacy section sits below Retention and Copying; lists only realize rows on screen.
+        let storageRow = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "On this device only")).firstMatch
+        var swipes = 0
+        while !storageRow.exists, swipes < 4 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(storageRow.exists)
+        let privacyPolicy = app.buttons["Privacy Policy"].firstMatch
+        XCTAssertTrue(privacyPolicy.waitForExistence(timeout: 3))
+        privacyPolicy.tap()
         XCTAssertTrue(app.navigationBars["Privacy Policy"].waitForExistence(timeout: 5))
     }
 }

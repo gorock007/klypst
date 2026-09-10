@@ -4,6 +4,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) private var state
     @State private var retention = AppEnvironment.shared.preferences.retentionPolicy
+    @State private var allowsUniversalClipboard = AppEnvironment.shared.preferences.allowsUniversalClipboard
+    @State private var pasteboardExpiry = AppEnvironment.shared.preferences.pasteboardExpiry
     @State private var clipCount: Int?
     @State private var showDeleteAllConfirmation = false
     @State private var showOnboarding = false
@@ -28,6 +30,25 @@ struct SettingsView: View {
                         Text("Retention")
                     } footer: {
                         Text("Unpinned clips are deleted after they haven’t been used for this long. Pinned clips never expire. Cleanup runs when you open Klypst.")
+                    }
+
+                    Section {
+                        Toggle("Send copies to my other devices", isOn: $allowsUniversalClipboard)
+                            .onChange(of: allowsUniversalClipboard) { _, newValue in
+                                AppEnvironment.shared.preferences.allowsUniversalClipboard = newValue
+                            }
+                        Picker("Clear the clipboard after", selection: $pasteboardExpiry) {
+                            ForEach(PasteboardExpiry.allCases) { expiry in
+                                Text(expiry.displayName).tag(expiry)
+                            }
+                        }
+                        .onChange(of: pasteboardExpiry) { _, newValue in
+                            AppEnvironment.shared.preferences.pasteboardExpiry = newValue
+                        }
+                    } header: {
+                        Text("Copying from Klypst")
+                    } footer: {
+                        Text("With sending off, a clip you copy from Klypst stays on this iPhone and is never passed to your Mac or iPad by Universal Clipboard. Clearing removes the copied clip from the clipboard after the chosen time, which is useful for codes and passwords.")
                     }
 
                     Section {

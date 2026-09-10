@@ -38,27 +38,45 @@ public struct GeneralPasteboardClipboard: SystemClipboard {
     }
 
     @MainActor
-    public func write(_ content: ClipContent) throws {
-        let pasteboard = UIPasteboard.general
+    public func write(_ content: ClipContent, options: PasteboardWriteOptions) throws {
+        let item: [String: Any]
         switch content.kind {
         case .text:
             guard let text = content.text else { throw SystemClipboardError.payloadMissing }
-            pasteboard.string = text
+            item = [UTType.utf8PlainText.identifier: text]
         case .url:
             guard let url = content.url else { throw SystemClipboardError.payloadMissing }
             // Provide both a URL and a plain-text representation so every text field accepts it.
-            pasteboard.setItems([[
+            item = [
                 UTType.url.identifier: url,
                 UTType.utf8PlainText.identifier: url.absoluteString,
-            ]])
+            ]
         case .image:
             guard let payloadURL = content.payloadURL,
                   let data = try? Data(contentsOf: payloadURL),
                   let info = ImagePayloadStore.inspect(data)
             else { throw SystemClipboardError.payloadMissing }
-            pasteboard.setData(data, forPasteboardType: info.contentType.identifier)
+            item = [info.contentType.identifier: data]
         }
-        KlypstLog.clipboard.info("Wrote clip to pasteboard (kind: \(content.kind.rawValue, privacy: .public)).")
+        UIPasteboard.general.setItems([item], options: Self.pasteboardOptions(options))
+        KlypstLog.clipboard.info("Wrote clip to pasteboard (kind: \(content.kind.rawValue, privacy: .public), localOnly: \(options.isLocalOnly, privacy: .public)).")
+    }
+
+    @MainActor
+    public func writeText(_ text: String, options: PasteboardWriteOptions) throws {
+        guard !text.isEmpty else { throw SystemClipboardError.payloadMissing }
+        UIPasteboard.general.setItems([[UTType.utf8PlainText.identifier: text]], options: Self.pasteboardOptions(options))
+        KlypstLog.clipboard.info("Wrote text to pasteboard (localOnly: \(options.isLocalOnly, privacy: .public)).")
+    }
+
+    /// `localOnly` keeps the item off Universal Clipboard; `expirationDate` lets iOS
+    /// clear it without Klypst having to run again.
+    private static func pasteboardOptions(_ options: PasteboardWriteOptions) -> [UIPasteboard.OptionsKey: Any] {
+        var result: [UIPasteboard.OptionsKey: Any] = [.localOnly: options.isLocalOnly]
+        if let date = options.expirationDate() {
+            result[.expirationDate] = date
+        }
+        return result
     }
 }
 #endif

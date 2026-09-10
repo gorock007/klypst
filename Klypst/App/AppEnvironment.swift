@@ -98,7 +98,7 @@ final class AppEnvironment {
         guard let repository else { throw ClipRepositoryError.storeUnavailable }
         guard let content = try await repository.clip(id: id) else { throw ClipRepositoryError.notFound }
         let before = UIPasteboard.general.changeCount
-        try clipboard.write(content)
+        try clipboard.write(content, options: preferences.pasteboardWriteOptions)
         let tookEffect = UIPasteboard.general.changeCount != before
         if tookEffect {
             try await repository.markUsed(id: id)
@@ -125,7 +125,7 @@ final class AppEnvironment {
             }
         }
         guard !lines.isEmpty else { return 0 }
-        UIPasteboard.general.string = lines.joined(separator: "\n")
+        try clipboard.writeText(lines.joined(separator: "\n"), options: preferences.pasteboardWriteOptions)
         for id in ids { try? await repository.markUsed(id: id) }
         markClipboardSeen()
         state.bumpChangeToken()

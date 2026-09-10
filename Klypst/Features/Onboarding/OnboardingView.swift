@@ -22,7 +22,8 @@ struct OnboardingView: View {
         Page(
             visual: .glyph("button.horizontal.top.press"),
             title: "Keep it one press away.",
-            body: "Set up the Action Button for the fastest path back to recent clips."
+            body: "Set up the Action Button for the fastest path back to recent clips.",
+            link: KlypstLinks.actionButtonShortcut.map { Page.Link(title: "Add the Klypst shortcut", url: $0) }
         ),
         Page(
             visual: .glyph("lock"),
@@ -130,7 +131,17 @@ struct OnboardingView: View {
                 .foregroundStyle(Color.brandInkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 10)
+                .padding(.bottom, item.link == nil ? 24 : 16)
+            if let link = item.link {
+                SwiftUI.Link(destination: link.url) {
+                    Label(link.title, systemImage: "plus.app")
+                        .font(.body.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(.accentColor)
                 .padding(.bottom, 24)
+                .accessibilityHint("Opens the Shortcuts app with the ready-made Action Button shortcut.")
+            }
         }
     }
 
@@ -153,8 +164,14 @@ struct OnboardingView: View {
             case glyph(String)
         }
 
+        struct Link: Hashable {
+            let title: String
+            let url: URL
+        }
+
         let visual: Visual
         let title: String
         let body: String
+        var link: Link? = nil
     }
 }
