@@ -13,6 +13,7 @@ struct KlypstApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     guard phase == .active else { return }
                     environment.state.bumpChangeToken()
+                    environment.refreshClipboardNudge()
                     Task { await environment.runRetention() }
                 }
         }

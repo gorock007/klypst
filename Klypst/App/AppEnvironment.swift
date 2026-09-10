@@ -1,6 +1,7 @@
 import Foundation
 import KlypstCore
 import SwiftUI
+import UIKit
 
 /// Process-wide services. Built once; also used by App Intents running in-process.
 @MainActor
@@ -21,6 +22,9 @@ final class AppEnvironment {
         if CommandLine.arguments.contains("--reset-state"), let store {
             store.preferences.reset()
             Task { try? await store.repository.deleteAll() }
+        }
+        if CommandLine.arguments.contains("--skip-onboarding") {
+            preferences.hasCompletedOnboarding = true
         }
         #endif
     }
@@ -45,10 +49,12 @@ final class AppEnvironment {
         guard let repository else { return .failed("The clip store isn’t available.") }
         do {
             guard var input = try await clipboard.readUserInitiatedContent() else {
+                markClipboardSeen()
                 return .nothingToSave
             }
             input = ClipInput(payload: input.payload, captureMethod: method)
             let result = try await repository.save(input)
+            markClipboardSeen()
             state.bumpChangeToken()
             switch result {
             case .saved(let summary): return .saved(summary)
@@ -68,7 +74,45 @@ final class AppEnvironment {
         try clipboard.write(content)
         try await repository.markUsed(id: id)
         state.lastCopiedClipID = id
+        markClipboardSeen()
         state.bumpChangeToken()
+    }
+
+    /// Copies several clips as one newline-separated text. Images are skipped.
+    /// Returns the number of clips included.
+    func copyCombined(ids: [UUID]) async throws -> Int {
+        guard let repository else { throw ClipRepositoryError.storeUnavailable }
+        var lines: [String] = []
+        for id in ids {
+            guard let content = try await repository.clip(id: id) else { continue }
+            switch content.kind {
+            case .text: if let text = content.text { lines.append(text) }
+            case .url: if let url = content.url { lines.append(url.absoluteString) }
+            case .image: continue
+            }
+        }
+        guard !lines.isEmpty else { return 0 }
+        UIPasteboard.general.string = lines.joined(separator: "\n")
+        for id in ids { try? await repository.markUsed(id: id) }
+        markClipboardSeen()
+        state.bumpChangeToken()
+        KlypstLog.clipboard.info("Wrote \(lines.count, privacy: .public) combined clips to pasteboard.")
+        return lines.count
+    }
+
+    // MARK: Clipboard nudge
+
+    /// Checks whether the pasteboard changed since we last acted on it. Uses only
+    /// `changeCount` and the `has*` flags, which never trigger the paste notice.
+    func refreshClipboardNudge() {
+        let pasteboard = UIPasteboard.general
+        let hasContent = pasteboard.hasStrings || pasteboard.hasURLs || pasteboard.hasImages
+        state.showsClipboardNudge = hasContent && pasteboard.changeCount != preferences.lastSeenPasteboardChangeCount
+    }
+
+    func markClipboardSeen() {
+        preferences.lastSeenPasteboardChangeCount = UIPasteboard.general.changeCount
+        state.showsClipboardNudge = false
     }
 
     func setPinned(id: UUID, _ pinned: Bool) async throws {

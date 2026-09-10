@@ -9,6 +9,7 @@ public struct PreferencesStore: Sendable {
         public static let hasCompletedOnboarding = "hasCompletedOnboarding"
         public static let lastPurgeAt = "lastPurgeAt"
         public static let saveCount = "saveCount"
+        public static let lastSeenPasteboardChangeCount = "lastSeenPasteboardChangeCount"
     }
 
     private let suiteName: String?
@@ -40,8 +41,15 @@ public struct PreferencesStore: Sendable {
         nonmutating set { defaults.set(newValue, forKey: Key.lastPurgeAt) }
     }
 
+    /// `UIPasteboard.general.changeCount` the last time Klypst saved, copied or the user dismissed the nudge.
+    /// Reading the change count never triggers the system paste notice.
+    public var lastSeenPasteboardChangeCount: Int {
+        get { defaults.object(forKey: Key.lastSeenPasteboardChangeCount) as? Int ?? -1 }
+        nonmutating set { defaults.set(newValue, forKey: Key.lastSeenPasteboardChangeCount) }
+    }
+
     public func reset() {
-        for key in [Key.retentionPolicy, Key.hasCompletedOnboarding, Key.lastPurgeAt, Key.saveCount] {
+        for key in [Key.retentionPolicy, Key.hasCompletedOnboarding, Key.lastPurgeAt, Key.saveCount, Key.lastSeenPasteboardChangeCount] {
             defaults.removeObject(forKey: key)
         }
     }

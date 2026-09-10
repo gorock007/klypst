@@ -10,7 +10,7 @@ Source documents: `docs/PRD.md` and `docs/architecture.md`.
 Klypst/                     Main app (SwiftUI, App Intents, snippet)
   App/                      Entry point, AppEnvironment, AppState, RootView, toast
   Features/                 History, Pinned, Settings, Onboarding, Help
-  Intents/                  SaveCurrentClipboard, ShowRecentClips (+ snippet), CopyClip, ClipEntity, App Shortcuts
+  Intents/                  SaveCurrentClipboard, SaveClip (Shortcuts input), ShowRecentClips (+ snippet), CopyClip, ClipEntity, App Shortcuts
   Resources/                Assets, PrivacyInfo.xcprivacy
 KlypstShareExtension/       Share Sheet extension (UIKit, no marketing UI)
 KlypstCore/                 Swift package shared by every target
@@ -55,7 +55,8 @@ Identifiers (change in `project.yml` and `KlypstConfiguration.swift` together):
 
 ## Key decisions
 
-- **No clipboard monitoring.** `UIPasteboard.general` is read only in `GeneralPasteboardClipboard.readUserInitiatedContent()`, called from the Save Clipboard control and the foreground `SaveCurrentClipboardIntent`.
+- **No clipboard monitoring.** `UIPasteboard.general` is read only in `GeneralPasteboardClipboard.readUserInitiatedContent()`, called from the Save Clipboard control, the nudge card, and the foreground `SaveCurrentClipboardIntent`. The nudge card is driven by `changeCount` and the `has*` flags only, which never trigger the paste notice.
+- **One-press capture goes through Shortcuts.** `SaveClipIntent` takes text/link/image as input. The recommended user shortcut is *Get Clipboard → Save to Klypst → Recent Clips* on the Action Button: Shortcuts (privileged) supplies the clipboard, so Klypst never reads it in the background.
 - **Store is shared multi-process state.** SwiftData store and image payloads live in the App Group. The repository actor uses short transactions, refetches before mutations, and treats a unique-constraint failure on save as a duplicate written by another process.
 - **Dedupe by content hash.** SHA-256 over kind-prefixed normalized content. A duplicate save refreshes `lastUsedAt` and moves the clip to the top.
 - **Retention is "days since last used".** Default 30 days; pinned clips never expire; purge runs on foreground, after settings changes, and is throttled to once per 10 minutes.
@@ -67,8 +68,8 @@ Identifiers (change in `project.yml` and `KlypstConfiguration.swift` together):
 ## Physical-device spike checklist (must pass before wider build-out)
 
 - [ ] A — App Group: save from the Share Extension, see it in the app; save in app, see it via Shortcuts.
-- [ ] B — Action Button: assign "Show Recent Clips" in Settings → Action Button; it runs without launching the app.
-- [ ] C — Interactive snippet: recent summaries display; tapping one runs `CopyClipIntent`; content reaches `UIPasteboard.general` from the background intent. If background pasteboard writes are blocked, switch `CopyClipIntent.supportedModes` to `.foreground`.
+- [x] B — Action Button (verified on device 10 Sep 2026): assign "Show Recent Clips" in Settings → Action Button; it runs without launching the app.
+- [x] C — Interactive snippet (verified on device 10 Sep 2026): recent summaries display; tapping one runs `CopyClipIntent`; content reaches `UIPasteboard.general` from the background intent. If background pasteboard writes are blocked, switch `CopyClipIntent.supportedModes` to `.foreground`.
 - [ ] Locked device: intents require authentication (`.requiresAuthentication`); confirm nothing is shown on the lock screen.
 - [ ] Share Sheet from Safari (URL), Notes (text), Photos (image), Files (file URL image); cancel; large image.
 - [ ] Airplane mode and low memory.

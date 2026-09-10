@@ -23,8 +23,8 @@ struct OnboardingView: View {
         ),
         Page(
             symbol: "button.horizontal.top.press",
-            title: "Get it back instantly",
-            body: "Assign Klypst to the Action Button: press it, tap a recent clip, and it’s ready to paste. Setup steps are in Help."
+            title: "One press to save, one tap to paste",
+            body: "Put Klypst on the Action Button: copy anything and press to save it; press again and tap a clip to paste it anywhere. The two-minute setup is in Help."
         ),
     ]
 
