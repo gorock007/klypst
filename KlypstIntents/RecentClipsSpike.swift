@@ -51,6 +51,7 @@ struct CopyClipSpikeIntent: AppIntent {
     // Discoverable on purpose: checking whether snippet buttons can run a hidden intent.
     static let isDiscoverable = true
     static let supportedModes: IntentModes = .background
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     @Parameter(title: "Clip ID")
     var clipID: String
