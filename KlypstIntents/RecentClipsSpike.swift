@@ -48,7 +48,8 @@ struct RecentClipsSpikeSnippetIntent: SnippetIntent {
 /// and records what happened.
 struct CopyClipSpikeIntent: AppIntent {
     static let title: LocalizedStringResource = "Copy Clip (Spike)"
-    static let isDiscoverable = false
+    // Discoverable on purpose: checking whether snippet buttons can run a hidden intent.
+    static let isDiscoverable = true
     static let supportedModes: IntentModes = .background
 
     @Parameter(title: "Clip ID")
@@ -108,6 +109,20 @@ struct CopyClipSpikeIntent: AppIntent {
         try? await store.repository.markUsed(id: id)
         KlypstLog.intents.info("Spike copy: process=\(outcome.process, privacy: .public) match=\(String(describing: outcome.readBackMatches), privacy: .public)")
         return .result()
+    }
+}
+
+/// App Shortcut so the spike can be assigned to the Action Button directly
+/// (Settings → Action Button → Shortcut → Klypst → Spike Clips) and run from
+/// Spotlight, bypassing the Shortcuts-app result sheet.
+struct SpikeShortcuts: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(
+            intent: ShowRecentClipsSpikeIntent(),
+            phrases: ["Spike clips in \(.applicationName)"],
+            shortTitle: "Spike Clips",
+            systemImageName: "testtube.2"
+        )
     }
 }
 
