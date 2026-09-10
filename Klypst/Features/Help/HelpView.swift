@@ -8,7 +8,7 @@ struct HelpView: View {
                 Text("Copy anything, press the Action Button, done. Klypst can’t read your clipboard in the background, but the Shortcuts app can hand it over each time you press. Build this once:")
                 step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
                 step(2, "Add the action **Get Clipboard**.")
-                step(3, "Add **Save to Klypst**. Its Content field fills with the Clipboard variable automatically.")
+                step(3, "Add **Save to Klypst**. Its Content field should show a **Clipboard** token. If it still says *Content*, tap it and choose the **Clipboard** variable.")
                 step(4, "Add **Recent Clips** so the same press also shows your list.")
                 step(5, "Name it **Klypst** and tap Done.")
                 step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")

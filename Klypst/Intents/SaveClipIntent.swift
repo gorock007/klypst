@@ -22,8 +22,10 @@ struct SaveClipIntent: AppIntent {
         }
     }
 
-    @Parameter(title: "Content", description: "Text or a link. Use the Clipboard variable to save what you last copied.")
-    var content: String?
+    // Required so Shortcuts auto-fills it with the previous action's output
+    // (the Clipboard variable). An optional parameter is left blank.
+    @Parameter(title: "Content", description: "Text or a link. Use the Clipboard variable to save what you last copied.", requestValueDialog: "What should Klypst save?")
+    var content: String
 
     @Parameter(title: "Image", description: "Optional image to save instead of text.", supportedContentTypes: [.image])
     var image: IntentFile?
@@ -41,7 +43,7 @@ struct SaveClipIntent: AppIntent {
         let input: ClipInput
         if let image, let data = try? await image.data, !data.isEmpty {
             input = .image(data, via: .intent)
-        } else if let content, !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        } else if !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             input = .text(content, via: .intent)
         } else {
             throw KlypstIntentError.nothingToSave
