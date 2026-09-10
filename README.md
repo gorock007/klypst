@@ -56,7 +56,7 @@ Identifiers (change in `project.yml` and `KlypstConfiguration.swift` together):
 ## Key decisions
 
 - **No clipboard monitoring.** `UIPasteboard.general` is read only in `GeneralPasteboardClipboard.readUserInitiatedContent()`, called from the Save Clipboard control, the nudge card, and the foreground `SaveCurrentClipboardIntent`. The nudge card is driven by `changeCount` and the `has*` flags only, which never trigger the paste notice.
-- **One-press capture goes through Shortcuts.** `SaveClipIntent` takes text/link/image as input. The recommended user shortcut is *Get Clipboard → Save to Klypst → Recent Clips* on the Action Button: Shortcuts (privileged) supplies the clipboard, so Klypst never reads it in the background.
+- **Capture and retrieval go through Shortcuts.** The recommended Action Button shortcut is *Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard*. Shortcuts (privileged) reads and writes the pasteboard; `PickClipIntent` saves, shows a system picker via `requestDisambiguation`, and returns text. The snippet route (*Save to Klypst → Recent Clips*) remains as an alternative but must open the app to copy (see spike C).
 - **Store is shared multi-process state.** SwiftData store and image payloads live in the App Group. The repository actor uses short transactions, refetches before mutations, and treats a unique-constraint failure on save as a duplicate written by another process.
 - **Dedupe by content hash.** SHA-256 over kind-prefixed normalized content. A duplicate save refreshes `lastUsedAt` and moves the clip to the top.
 - **Retention is "days since last used".** Default 30 days; pinned clips never expire; purge runs on foreground, after settings changes, and is throttled to once per 10 minutes.

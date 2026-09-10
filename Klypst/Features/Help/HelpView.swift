@@ -5,18 +5,18 @@ struct HelpView: View {
     var body: some View {
         List {
             Section {
-                Text("Copy anything, press the Action Button, done. Klypst can’t read your clipboard in the background, but the Shortcuts app can hand it over each time you press. Build this once:")
+                Text("Copy anything, press the Action Button to save it. Press again to pick any earlier clip and paste it — without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts. Build this once:")
                 step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
-                step(2, "Add the action **Get Clipboard**.")
-                step(3, "Add **Save to Klypst**. Its Content field should show a **Clipboard** token. If it still says *Content*, tap it and choose the **Clipboard** variable.")
-                step(4, "Add **Recent Clips** so the same press also shows your list.")
+                step(2, "Add **Get Clipboard**.")
+                step(3, "Add **Pick a Clip** (search for Klypst). Tap the small arrow to expand it, tap **Save First**, choose **Select Variable**, and pick **Clipboard**.")
+                step(4, "Add **Copy to Clipboard**. Its field should show the text from Pick a Clip; if not, tap it and choose that variable.")
                 step(5, "Name it **Klypst** and tap Done.")
                 step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
                 ShortcutsLink()
             } header: {
-                Text("One-press capture with the Action Button")
+                Text("Set up the Action Button")
             } footer: {
-                Text("The first press asks whether the shortcut may read the clipboard. Choose Always Allow. Saving the same thing twice just moves it to the top, so pressing to look at your clips never creates duplicates. Images copied to the clipboard need the Share Sheet or Save Clipboard below.")
+                Text("Each press saves what you last copied, then shows a list of your clips. Pick one and it’s on your clipboard; tap the same one again if you only wanted to save. The first run asks whether the shortcut may use the clipboard — choose Always Allow. Images can’t go through this recipe; save them with the Share Sheet and copy them from the Klypst app.")
             }
 
             Section {
@@ -58,21 +58,13 @@ struct HelpView: View {
             }
 
             Section {
-                Text("Prefer a picker that never leaves the app you’re in? Build this shortcut instead. Shortcuts does the copying itself, so nothing opens:")
-                step(1, "**Get Clipboard**")
-                step(2, "**Save to Klypst** with the Clipboard variable")
-                step(3, "**Get Recent Clips**")
-                step(4, "**Choose from List** (uses the clips from step 3)")
-                step(5, "**Get Clip Text** (uses the chosen item)")
-                step(6, "**Copy to Clipboard** (uses the text from step 5)")
+                Text("Prefer a richer list with thumbnails? Make a shortcut with **Get Clipboard**, **Save to Klypst** (Content: Clipboard) and **Recent Clips**. Tapping a clip in that list opens Klypst for a moment to copy it — iOS doesn’t allow the copy to happen in the background — then swipe back and paste.")
             } header: {
-                Text("Alternative: pick-and-copy entirely in Shortcuts")
-            } footer: {
-                Text("Image clips can’t be returned as text in this recipe; copy those from the Klypst app.")
+                Text("Alternative: the Klypst clip list")
             }
 
             Section {
-                Text("Klypst adds these actions to the Shortcuts app and Siri: **Recent Clips**, **Save Clipboard**, **Save to Klypst**, **Copy Clip**, **Get Recent Clips** and **Get Clip Text**. All but the first two appear when you add an action and search for Klypst.")
+                Text("Klypst adds these actions to the Shortcuts app and Siri: **Recent Clips**, **Save Clipboard**, **Pick a Clip**, **Save to Klypst**, **Copy Clip**, **Get Recent Clips** and **Get Clip Text**. All but the first two appear when you add an action and search for Klypst.")
             } header: {
                 Text("Shortcuts & Siri")
             }

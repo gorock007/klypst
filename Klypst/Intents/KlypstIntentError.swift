@@ -9,6 +9,7 @@ enum KlypstIntentError: Error, CustomLocalizedStringResourceConvertible {
     case nothingToSave
     case saveRejected(String)
     case imageNotText
+    case noClips
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
@@ -18,6 +19,7 @@ enum KlypstIntentError: Error, CustomLocalizedStringResourceConvertible {
         case .nothingToSave: "There’s nothing on the clipboard to save."
         case .saveRejected(let message): "\(message)"
         case .imageNotText: "That clip is an image, so it can’t be returned as text. Copy it from the Klypst app instead."
+        case .noClips: "There are no text or link clips in Klypst yet."
         }
     }
 }
