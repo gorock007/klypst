@@ -22,6 +22,16 @@ struct KlypstShortcuts: AppShortcutsProvider {
             shortTitle: "Save Clipboard",
             systemImageName: "doc.on.clipboard"
         )
+        #if DEBUG
+        // Debug only: lets UI tests run the picker from Spotlight. In release the
+        // picker is used inside a shortcut, followed by Copy to Clipboard.
+        AppShortcut(
+            intent: PickClipIntent(),
+            phrases: ["Pick a clip in \(.applicationName)"],
+            shortTitle: "Pick a Clip",
+            systemImageName: "square.stack"
+        )
+        #endif
     }
 
     static let shortcutTileColor: ShortcutTileColor = .teal

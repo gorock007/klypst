@@ -7,6 +7,22 @@ struct RootView: View {
 
     var body: some View {
         Group {
+            #if DEBUG
+            if SnippetPreviewScreen.isRequested {
+                SnippetPreviewScreen()
+            } else {
+                content
+            }
+            #else
+            content
+            #endif
+        }
+        .toastOverlay()
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        Group {
             if case .failure = AppEnvironment.shared.storeResult {
                 StoreUnavailableView()
             } else if hasCompletedOnboarding {
@@ -18,7 +34,6 @@ struct RootView: View {
                 }
             }
         }
-        .toastOverlay()
     }
 }
 

@@ -4,6 +4,8 @@ A privacy-first iPhone clipboard utility for iOS 26. Capture → remember → su
 
 Source documents: `docs/PRD.md` (what), `docs/architecture.md` (how) and `docs/brand.md` (look, feel, voice).
 
+Debug launch arguments: `--reset-state`, `--skip-onboarding`, `--seed-sample-clips`, and `--preview-snippets` (renders the clip cards with sample data for design review). `PickerFlowTests` drives the real card from Spotlight and is opt-in (`TEST_RUNNER_KLYPST_SYSTEM_UI=1`); the iOS 26.5 simulator's Shortcuts backend reports "Couldn't find shortcut" for every App Shortcut, so run it on a device.
+
 Brand in code: color tokens are asset-catalog colorsets (`BrandBackground` (white / near-black), `BrandSurface`, `BrandInk`, … plus the orange `AccentColor`), and `Klypst/App/Brand.swift` holds radii, motion, the mascot view, the card-stack glyph and the primary button style. The mascot (`Mascot` imageset, light/dark) appears only in onboarding, the empty history state and Settings.
 
 ## Layout
@@ -60,7 +62,7 @@ Identifiers (change in `project.yml` and `KlypstConfiguration.swift` together):
 ## Key decisions
 
 - **No clipboard monitoring.** `UIPasteboard.general` is read only in `GeneralPasteboardClipboard.readUserInitiatedContent()`, called from the Save Clipboard control, the nudge card, and the foreground `SaveCurrentClipboardIntent`. The nudge card is driven by `changeCount` and the `has*` flags only, which never trigger the paste notice.
-- **Capture and retrieval go through Shortcuts.** The recommended Action Button shortcut is *Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard*. Shortcuts (privileged) reads and writes the pasteboard; `PickClipIntent` saves, shows a system picker via `requestDisambiguation`, and returns text. The snippet route (*Save to Klypst → Recent Clips*) remains as an alternative but must open the app to copy (see spike C).
+- **Capture and retrieval go through Shortcuts.** The recommended Action Button shortcut is *Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard*. Shortcuts (privileged) reads and writes the pasteboard; `PickClipIntent` saves, shows the branded Klypst card via `requestConfirmation(snippetIntent:)` (row taps run `SelectPickerClipIntent` and reload the card; the system Continue button returns the selection), and returns text. Its Style parameter can switch to the plain one-tap system list (`requestDisambiguation`). A snippet can't finish on a row tap, which is why the card needs Continue. The snippet route (*Save to Klypst → Recent Clips*) remains as an alternative but must open the app to copy (see spike C).
 - **Store is shared multi-process state.** SwiftData store and image payloads live in the App Group. The repository actor uses short transactions, refetches before mutations, and treats a unique-constraint failure on save as a duplicate written by another process.
 - **Dedupe by content hash.** SHA-256 over kind-prefixed normalized content. A duplicate save refreshes `lastUsedAt` and moves the clip to the top.
 - **Retention is "days since last used".** Default 30 days; pinned clips never expire; purge runs on foreground, after settings changes, and is throttled to once per 10 minutes.

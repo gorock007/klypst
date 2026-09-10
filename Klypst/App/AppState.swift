@@ -21,6 +21,8 @@ final class AppState {
     var toast: Toast?
     var pendingAction: PendingAction?
     var lastCopiedClipID: UUID?
+    /// The Pick a Clip card currently on screen, if any.
+    var pickerSession: ClipPickerSession?
     /// True when the pasteboard changed since Klypst last saved from or wrote to it.
     var showsClipboardNudge = false
 

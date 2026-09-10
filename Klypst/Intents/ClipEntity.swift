@@ -24,8 +24,9 @@ struct ClipEntity: AppEntity, Identifiable {
     }
 
     var displayRepresentation: DisplayRepresentation {
-        let subtitle = "\(kind.displayName) · \(lastUsedAt.formatted(.relative(presentation: .named)))"
-        let image: DisplayRepresentation.Image = thumbnailURL.map { .init(url: $0) } ?? .init(systemName: kind.systemImageName)
+        let style = ClipDisplayStyle(kind: kind, preview: preview)
+        let subtitle = "\(style.displayName) • \(lastUsedAt.formatted(.relative(presentation: .named)))"
+        let image: DisplayRepresentation.Image = thumbnailURL.map { .init(url: $0) } ?? .init(systemName: style.systemImageName)
         return DisplayRepresentation(
             title: "\(preview)",
             subtitle: "\(subtitle)",

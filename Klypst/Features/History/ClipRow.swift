@@ -13,7 +13,7 @@ struct ClipRow: View {
                     .lineLimit(summary.kind == .text ? 3 : 2)
                     .foregroundStyle(.primary)
                 HStack(spacing: 6) {
-                    Text(summary.kind.displayName)
+                    Text(style.displayName)
                     Text("·")
                     Text(summary.lastUsedAt, style: .relative)
                     if summary.isPinned {
@@ -41,17 +41,19 @@ struct ClipRow: View {
                 .accessibilityHidden(true)
         } else {
             // A small "card" tile: the stack geometry, quietly.
-            Image(systemName: summary.kind.systemImageName)
+            Image(systemName: style.systemImageName)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.brandInkSecondary)
+                .foregroundStyle(style == .code ? Color.brandCode : Color.brandInkSecondary)
                 .frame(width: 36, height: 36)
-                .background(Color.brandSurfaceRaised, in: RoundedRectangle(cornerRadius: Brand.Radius.tile, style: .continuous))
+                .background(style == .code ? Color.brandCodeTile : Color.brandSurfaceRaised, in: RoundedRectangle(cornerRadius: Brand.Radius.tile, style: .continuous))
                 .accessibilityHidden(true)
         }
     }
 
+    private var style: ClipDisplayStyle { ClipDisplayStyle(kind: summary.kind, preview: summary.preview) }
+
     private var accessibilityDescription: String {
-        var parts = [summary.kind.displayName, summary.preview]
+        var parts = [style.displayName, summary.preview]
         if summary.isPinned { parts.append("Pinned") }
         parts.append("last used \(summary.lastUsedAt.formatted(.relative(presentation: .named)))")
         return parts.joined(separator: ", ")

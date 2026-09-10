@@ -3,9 +3,13 @@ import Foundation
 import KlypstCore
 
 /// The one-action picker for Shortcuts. Optionally saves the clipboard first,
-/// shows the user's recent text/link clips as a system list, and returns the
-/// chosen clip's text. Followed by Shortcuts' own "Copy to Clipboard" this
-/// never opens Klypst, because Shortcuts performs the pasteboard write.
+/// shows the user's recent text/link clips, and returns the chosen clip's text.
+/// Followed by Shortcuts' own "Copy to Clipboard" this never opens Klypst,
+/// because Shortcuts performs the pasteboard write.
+///
+/// Two styles: the branded Klypst card (tap a clip, then Continue) and the
+/// plain system list (one tap). The card can't finish on the row tap itself:
+/// only the system's confirmation button can hand a value back to Shortcuts.
 ///
 /// Recommended shortcut: Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard.
 struct PickClipIntent: AppIntent {
@@ -23,7 +27,19 @@ struct PickClipIntent: AppIntent {
             \.$saveFirst
             \.$clip
             \.$limit
+            \.$style
         }
+    }
+
+    enum Style: String, AppEnum {
+        case card
+        case list
+
+        static let typeDisplayRepresentation: TypeDisplayRepresentation = "Picker Style"
+        static let caseDisplayRepresentations: [Style: DisplayRepresentation] = [
+            .card: DisplayRepresentation(title: "Klypst Card", subtitle: "Tap a clip, then Continue"),
+            .list: DisplayRepresentation(title: "Quick List", subtitle: "Plain system list, one tap"),
+        ]
     }
 
     // Connected to the previous action (Get Clipboard) automatically; the Clip
@@ -35,8 +51,11 @@ struct PickClipIntent: AppIntent {
     @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.", inputConnectionBehavior: .never)
     var clip: ClipEntity?
 
-    @Parameter(title: "Show", description: "How many recent clips to offer.", default: 8, inclusiveRange: (1, 25))
+    @Parameter(title: "Show", description: "How many recent clips to offer.", default: 5, inclusiveRange: (1, 25))
     var limit: Int
+
+    @Parameter(title: "Style", description: "Klypst Card shows your clips on the Klypst card: tap one, then Continue. Quick List is the plain system list, where one tap picks.", default: .card)
+    var style: Style
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
@@ -56,13 +75,23 @@ struct PickClipIntent: AppIntent {
             let pinned = try await repository.pinned(limit: limit)
             let recent = try await repository.recent(limit: limit + 5)
             var seen = Set<UUID>()
-            let candidates = (pinned + recent)
+            let candidates = Array((pinned + recent)
                 .filter { $0.kind != .image }
                 .filter { seen.insert($0.id).inserted }
-                .prefix(limit)
-                .map(ClipEntity.init(summary:))
+                .prefix(limit))
             guard !candidates.isEmpty else { throw KlypstIntentError.noClips }
-            chosen = try await $clip.requestDisambiguation(among: Array(candidates), dialog: "Which clip?")
+
+            switch style {
+            case .card:
+                environment.state.pickerSession = ClipPickerSession(clips: candidates, selectedID: candidates.first?.id)
+                defer { environment.state.pickerSession = nil }
+                chosen = try await requestConfirmation(actionName: .continue, snippetIntent: ClipPickerSnippetIntent())
+            case .list:
+                chosen = try await $clip.requestDisambiguation(
+                    among: candidates.map(ClipEntity.init(summary:)),
+                    dialog: "Pick a clip to copy"
+                )
+            }
         }
 
         guard let content = try await repository.clip(id: chosen.id) else { throw KlypstIntentError.clipNotFound }

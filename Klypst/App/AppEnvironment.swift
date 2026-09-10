@@ -18,16 +18,39 @@ final class AppEnvironment {
             KlypstLog.app.fault("Shared store unavailable: \(String(describing: type(of: error)), privacy: .public)")
         }
         #if DEBUG
-        // UI tests launch with `--reset-state` to start from a clean install.
-        if CommandLine.arguments.contains("--reset-state"), let store {
-            store.preferences.reset()
-            Task { try? await store.repository.deleteAll() }
+        // UI tests launch with `--reset-state` to start from a clean install, and
+        // `--seed-sample-clips` to fill the store for picker and design checks.
+        let reset = CommandLine.arguments.contains("--reset-state")
+        let seed = CommandLine.arguments.contains("--seed-sample-clips")
+        if reset || seed, let store {
+            if reset { store.preferences.reset() }
+            let state = state
+            Task {
+                if reset { try? await store.repository.deleteAll() }
+                if seed {
+                    for input in Self.sampleInputs {
+                        _ = try? await store.repository.save(input)
+                    }
+                }
+                state.bumpChangeToken()
+            }
         }
         if CommandLine.arguments.contains("--skip-onboarding") {
             preferences.hasCompletedOnboarding = true
         }
         #endif
     }
+
+    #if DEBUG
+    /// Oldest first, so the last one is the most recent clip.
+    private static let sampleInputs: [ClipInput] = [
+        .text("42 Wallaby Way, Sydney NSW 2000", via: .manualSave),
+        .text("npm install klypst", via: .manualSave),
+        .url(URL(string: "https://gorock.sh/writings/clipboard-memory")!, via: .manualSave),
+        .text("Meeting notes about Q3 planning and hiring", via: .manualSave),
+        .url(URL(string: "https://naatiace.com/")!, via: .manualSave),
+    ]
+    #endif
 
     var store: KlypstStore? {
         try? storeResult.get()
