@@ -7,6 +7,8 @@ import SwiftUI
 /// while the card is on screen.
 struct ClipPickerSession: Equatable {
     var clips: [ClipSummary]
+    /// Nil until the user taps a row. Continue with no selection returns the
+    /// most recent clip, which is what was just saved, so it is a no-op copy.
     var selectedID: UUID?
 
     var selected: ClipSummary? {
@@ -14,8 +16,8 @@ struct ClipPickerSession: Equatable {
     }
 }
 
-/// The branded picker card. Shown by `PickClipIntent` through
-/// `requestConfirmation(snippetIntent:)`; its value is the clip returned on Continue.
+/// The card shown by `PickClipIntent` through `requestConfirmation(snippetIntent:)`.
+/// Its value is the clip returned when the user taps the system Continue button.
 struct ClipPickerSnippetIntent: SnippetIntent {
     static let title: LocalizedStringResource = "Clip Picker"
     static let isDiscoverable = false
@@ -28,7 +30,7 @@ struct ClipPickerSnippetIntent: SnippetIntent {
         }
         let view = ClipPickerCardView(
             clips: session.clips.map(ClipEntity.init(summary:)),
-            selectedID: selected.id
+            selectedID: session.selectedID
         )
         return .result(value: ClipEntity(summary: selected), view: view)
     }
@@ -39,6 +41,7 @@ struct SelectPickerClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Select Clip"
     static let isDiscoverable = false
     static let supportedModes: IntentModes = .background
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     @Parameter(title: "Clip ID")
     var clipID: String
@@ -59,17 +62,17 @@ struct SelectPickerClipIntent: AppIntent {
     }
 }
 
-/// Card body: each row selects; the system's Continue button returns the selection.
+/// Card body: tapping a row selects it; the system's Continue button returns it.
 struct ClipPickerCardView: View {
     let clips: [ClipEntity]
-    let selectedID: UUID
+    let selectedID: UUID?
 
     var body: some View {
         ClipCardPanel(subtitle: "Pick a clip to copy") {
-            ForEach(clips) { clip in
+            ForEach(Array(clips.enumerated()), id: \.element.id) { index, clip in
                 let isSelected = clip.id == selectedID
                 Button(intent: SelectPickerClipIntent(clipID: clip.id)) {
-                    ClipCardRow(clip: clip, trailing: isSelected ? .selected : .unselected)
+                    ClipCardRow(clip: clip, isHighlighted: isSelected, showsDivider: index < clips.count - 1)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(clip.accessibilityDescription)

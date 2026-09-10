@@ -13,14 +13,13 @@ struct RecentClipsSnippetView: View {
             if clips.isEmpty {
                 Text("Nothing here yet. Copy something and save it. It’ll be here when you need it.")
                     .font(.subheadline)
-                    .foregroundStyle(Color.brandInkSecondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 4)
                     .padding(.vertical, 8)
             } else {
-                ForEach(clips) { clip in
+                ForEach(Array(clips.enumerated()), id: \.element.id) { index, clip in
                     Button(intent: CopyClipIntent(clip: clip)) {
-                        ClipCardRow(clip: clip, trailing: clip.id == copiedID ? .copied : .copy)
+                        ClipCardRow(clip: clip, isHighlighted: clip.id == copiedID, showsDivider: index < clips.count - 1)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(clip.accessibilityDescription)
@@ -30,15 +29,14 @@ struct RecentClipsSnippetView: View {
 
             Button(intent: OpenKlypstIntent()) {
                 Label("Open Klypst", systemImage: "arrow.up.forward.app")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.brandInk)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.brandRow, in: Capsule())
-                    .overlay { Capsule().strokeBorder(Color.brandRowBorder, lineWidth: 1) }
+                    .padding(.vertical, 10)
+                    .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
             }
             .buttonStyle(.plain)
-            .padding(.top, 4)
+            .padding(.top, 10)
         }
     }
 }

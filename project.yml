@@ -52,7 +52,6 @@ targets:
     dependencies:
       - package: KlypstCore
       - target: KlypstShareExtension
-      - target: KlypstIntents
     entitlements:
       path: Klypst/Klypst.entitlements
       properties:
@@ -120,36 +119,6 @@ targets:
         SKIP_INSTALL: YES
         APPLICATION_EXTENSION_API_ONLY: YES
 
-  # App Intents extension: intents run out of process (no app launch/resume).
-  KlypstIntents:
-    type: extensionkit-extension
-    platform: iOS
-    sources:
-      - path: KlypstIntents
-    dependencies:
-      - package: KlypstCore
-    entitlements:
-      path: KlypstIntents/KlypstIntents.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - group.com.klypst.shared
-    info:
-      path: KlypstIntents/Info.plist
-      properties:
-        CFBundleDisplayName: Klypst
-        CFBundleName: KlypstIntents
-        CFBundleShortVersionString: $(MARKETING_VERSION)
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundlePackageType: XPC!
-        EXAppExtensionAttributes:
-          EXExtensionPointIdentifier: com.apple.appintents-extension
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.klypst.app.intents
-        PRODUCT_NAME: KlypstIntents
-        SKIP_INSTALL: YES
-        APPLICATION_EXTENSION_API_ONLY: YES
-
   KlypstUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -169,7 +138,6 @@ schemes:
       targets:
         Klypst: all
         KlypstShareExtension: all
-        KlypstIntents: all
         KlypstUITests: [test]
     run:
       config: Debug

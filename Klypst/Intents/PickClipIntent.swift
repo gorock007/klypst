@@ -7,9 +7,11 @@ import KlypstCore
 /// Followed by Shortcuts' own "Copy to Clipboard" this never opens Klypst,
 /// because Shortcuts performs the pasteboard write.
 ///
-/// Two styles: the branded Klypst card (tap a clip, then Continue) and the
-/// plain system list (one tap). The card can't finish on the row tap itself:
-/// only the system's confirmation button can hand a value back to Shortcuts.
+/// Two styles: the Klypst card (tap a clip, then the system Continue button) and
+/// the plain system list (one tap). A snippet row can't return a value to the
+/// shortcut on its own; only the confirmation button can, so the card needs
+/// Continue. With nothing selected, Continue returns the newest clip, which is
+/// the one just saved, so the copy is a no-op.
 ///
 /// Recommended shortcut: Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard.
 struct PickClipIntent: AppIntent {
@@ -83,7 +85,7 @@ struct PickClipIntent: AppIntent {
 
             switch style {
             case .card:
-                environment.state.pickerSession = ClipPickerSession(clips: candidates, selectedID: candidates.first?.id)
+                environment.state.pickerSession = ClipPickerSession(clips: candidates, selectedID: nil)
                 defer { environment.state.pickerSession = nil }
                 chosen = try await requestConfirmation(actionName: .continue, snippetIntent: ClipPickerSnippetIntent())
             case .list:

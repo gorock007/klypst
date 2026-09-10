@@ -14,7 +14,7 @@ struct SnippetPreviewScreen: View {
         ScrollView {
             VStack(spacing: 28) {
                 platter {
-                    ClipPickerCardView(clips: samples.picker, selectedID: samples.picker[0].id)
+                    ClipPickerCardView(clips: samples.picker, selectedID: samples.picker[1].id)
                 }
                 platter {
                     RecentClipsSnippetView(clips: samples.recent, copiedID: samples.recent[1].id)
@@ -23,17 +23,15 @@ struct SnippetPreviewScreen: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 24)
         }
-        .background {
-            LinearGradient(colors: [Color(white: 0.25), Color(white: 0.12)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        }
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
     }
 
-    /// Approximates the system's snippet platter.
+    /// Approximates the system's snippet platter: a light/dark material container.
     private func platter<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         content()
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
-            .shadow(color: .black.opacity(0.3), radius: 24, y: 10)
+            .shadow(color: .black.opacity(0.12), radius: 24, y: 10)
     }
 }
 

@@ -17,7 +17,6 @@ Klypst/                     Main app (SwiftUI, App Intents, snippet)
   Intents/                  SaveCurrentClipboard, SaveClip (Shortcuts input), ShowRecentClips (+ snippet), CopyClip, ClipEntity, App Shortcuts
   Resources/                Assets, PrivacyInfo.xcprivacy
 KlypstShareExtension/       Share Sheet extension (UIKit, no marketing UI)
-KlypstIntents/              App Intents extension (out-of-process intents; spike D)
 brand/                      Canonical brand assets (mascot master/flat, app icon masters)
 Klypst/Resources/AppIcon.icon  Icon Composer bundle (layered iOS 26 icon; the .appiconset is the flat fallback)
 KlypstCore/                 Swift package shared by every target
@@ -77,7 +76,7 @@ Identifiers (change in `project.yml` and `KlypstConfiguration.swift` together):
 - [ ] A — App Group: save from the Share Extension, see it in the app; save in app, see it via Shortcuts.
 - [x] B — Action Button (verified on device 10 Sep 2026): assign "Show Recent Clips" in Settings → Action Button; it runs without launching the app.
 - [x] C — Interactive snippet (device, 10 Sep 2026): recent summaries display and tapping one runs `CopyClipIntent`. **Finding:** iOS discards `UIPasteboard` writes from the backgrounded app process (the first test passed only because the tapped clip was already on the clipboard). `changeCount` still advances locally, so it cannot detect the drop. `CopyClipIntent` now continues in the foreground (`.foreground(.dynamic)`) whenever `UIApplication.shared.applicationState != .active`, then writes. A fully background-safe alternative exists through Shortcuts: `Get Recent Clips → Choose from List → Get Clip Text → Copy to Clipboard`.
-- [ ] D — Extension pasteboard write (pending device run): `KlypstIntents` is an App Intents extension (ExtensionKit, `com.apple.appintents-extension`) that runs intents in a system-hosted process. Its "Recent Clips (Spike)" action shows a snippet; tapping a row runs `CopyClipSpikeIntent`, which writes `UIPasteboard.general` from the extension and prints changeCount, read-back match, timing and process name into the snippet. If the write survives, the Action Button flow becomes press → snippet → tap → copied with nothing opening and no Continue, and the production intents move into this target. If it does not, spike C stands and the fallback is the foreground copy.
+- [x] D — App Intents extension (device, 11 Sep 2026, inconclusive, removed): an ExtensionKit `com.apple.appintents-extension` target rendered its snippet out of process from a Shortcuts-app shortcut, but `Button(intent:)` rows in that Shortcuts result sheet (the one with a Done button) never dispatched, so whether an extension's pasteboard write survives was never observed. Not pursued; the product flow stays Get Clipboard → Pick a Clip → Copy to Clipboard.
 - [ ] Locked device: intents require authentication (`.requiresAuthentication`); confirm nothing is shown on the lock screen.
 - [ ] Share Sheet from Safari (URL), Notes (text), Photos (image), Files (file URL image); cancel; large image.
 - [ ] Airplane mode and low memory.
