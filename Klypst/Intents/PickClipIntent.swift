@@ -20,9 +20,9 @@ import UIKit
 /// recipe wraps Copy to Clipboard in "If … has any value" so that empty result never
 /// overwrites the image.
 ///
-/// Recommended shortcut (see `KlypstLinks.actionButtonShortcut`):
-/// Get Clipboard → Get Images from Input → If images: Pick a Clip (Save Image First) /
-/// Otherwise: Pick a Clip (Save First: Clipboard) → If result has any value: Copy to Clipboard.
+/// Recommended shortcut (see `KlypstLinks.actionButtonShortcutFile`):
+/// Get Clipboard → Get Images from Input → Pick a Clip (Save First: Clipboard, Save Image
+/// First: Images) → If result has any value: Copy to Clipboard.
 struct PickClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Pick a Clip"
     static let description = IntentDescription(
@@ -71,8 +71,9 @@ struct PickClipIntent: AppIntent {
     var saveFirst: String?
 
     // Never auto-connected: Shortcuts would try to turn a text clipboard into an image.
-    // The recipe wires it to "Get Images from Input" inside an If.
-    @Parameter(title: "Save Image First", description: "Optional. Pass an image (for example Get Images from Input on the Clipboard variable) to save it before picking.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
+    // The recipe wires it to "Get Images from Input" (empty for text, so this is nil),
+    // and Save First to the Clipboard variable. When both arrive, the image wins.
+    @Parameter(title: "Save Image First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) to save a copied image before picking. Takes priority over Save First.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
     var saveImageFirst: IntentFile?
 
     @Parameter(title: "Include Images", description: "Offer image clips too. Picking an image copies it from Klypst directly and returns nothing, so put Copy to Clipboard inside an If … has any value.", default: true)
@@ -96,8 +97,8 @@ struct PickClipIntent: AppIntent {
             _ = try? await repository.save(.image(data, via: .intent))
             environment.markClipboardSeen()
             environment.state.bumpChangeToken()
-        } else if let saveFirst, !saveFirst.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            _ = try? await repository.save(.text(saveFirst, via: .intent))
+        } else if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst) {
+            _ = try? await repository.save(.text(text, via: .intent))
             environment.markClipboardSeen()
             environment.state.bumpChangeToken()
         }

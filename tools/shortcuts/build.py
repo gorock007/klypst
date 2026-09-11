@@ -74,24 +74,23 @@ def workflow(actions, glyph=61440, color=-12365313):
 
 
 def main_recipe():
-    """Get Clipboard → Get Images from Input → If images: Pick a Clip (Save Image First)
-    / Otherwise: Pick a Clip (Save First: Clipboard) → If result has any value: Copy to Clipboard."""
-    clipboard, images, pick_image, pick_text, end1, end2 = (uid() for _ in range(6))
-    g1, g2 = uid(), uid()
-    if1, else1, _ = if_block(g1, ("Images", images))
-    if2, else2, _ = if_block(g2, ("If Result", end1))
+    """Get Clipboard → Get Images from Input → Pick a Clip (Save First: Clipboard,
+    Save Image First: Images) → If result has any value: Copy to Clipboard.
+
+    No If around capture: Get Images from Input is empty for text, so Save Image First
+    is simply nil then, and Klypst prefers the image when both arrive. The remaining If
+    keeps an empty result (an image Klypst copied itself) from clearing the clipboard."""
+    clipboard, images, pick, end = (uid() for _ in range(4))
+    group = uid()
+    if_, else_, _ = if_block(group, ("Pick a Clip", pick))
     return workflow([
         action("is.workflow.actions.getclipboard", UUID=clipboard),
         action("is.workflow.actions.detect.images", UUID=images, WFInput=attachment("Clipboard", clipboard)),
-        if1,
-        intent("PickClipIntent", pick_image, saveImageFirst=attachment("Images", images)),
-        else1,
-        intent("PickClipIntent", pick_text, saveFirst=token_string("Clipboard", clipboard)),
-        end_if(g1, end1),
-        if2,
-        action("is.workflow.actions.setclipboard", WFInput=attachment("If Result", end1)),
-        else2,
-        end_if(g2, end2),
+        intent("PickClipIntent", pick, saveFirst=token_string("Clipboard", clipboard), saveImageFirst=attachment("Images", images)),
+        if_,
+        action("is.workflow.actions.setclipboard", WFInput=attachment("Pick a Clip", pick)),
+        else_,
+        end_if(group, end),
     ])
 
 

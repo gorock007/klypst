@@ -27,7 +27,7 @@ struct HelpView: View {
                     } else {
                         Text("Build this once:")
                         manualRecipeSteps
-                        step(9, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
+                        step(7, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
                         ShortcutsLink()
                     }
                 } header: {
@@ -120,11 +120,9 @@ struct HelpView: View {
         step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
         step(2, "Add **Get Clipboard**.")
         step(3, "Add **Get Images from Input** and set its input to the **Clipboard** variable. It returns the image if one was copied, and nothing otherwise.")
-        step(4, "Add **If**. Set its input to **Images from Input** and the condition to **has any value**.")
-        step(5, "Inside the If, add **Pick a Clip** (search for Klypst). Expand it: set **Save Image First** to **Images from Input**, and leave **Save First** and **Clip** empty.")
-        step(6, "Under **Otherwise**, add another **Pick a Clip**. Expand it: set **Save First** to the **Clipboard** variable, and leave **Clip** empty.")
-        step(7, "After **End If**, add another **If**: input **If Result**, condition **has any value**. Inside it add **Copy to Clipboard** and set it to **If Result**.")
-        step(8, "Name it **Klypst** and tap Done.")
+        step(4, "Add **Pick a Clip** (search for Klypst). Expand it: set **Save First** to the **Clipboard** variable, **Save Image First** to **Images**, and leave **Clip** empty.")
+        step(5, "Add **If**: input **Pick a Clip**, condition **has any value**. Inside it add **Copy to Clipboard** and set it to **Pick a Clip**.")
+        step(6, "Name it **Klypst** and tap Done.")
     }
 
     private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
