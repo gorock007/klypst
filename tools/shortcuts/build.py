@@ -42,20 +42,6 @@ def intent(name, ref, **params):
     return action(f"com.klypst.app.{name}", AppIntentDescriptor={**APP, "AppIntentIdentifier": name}, UUID=ref, **params)
 
 
-def if_block(group, variable_output, condition=100):
-    """`condition` 100 = has any value. Returns (if, otherwise, end) actions."""
-    return (
-        action("is.workflow.actions.conditional", GroupingIdentifier=group, WFControlFlowMode=0,
-               WFCondition=condition, WFInput={"Type": "Variable", "Variable": attachment(*variable_output)}),
-        action("is.workflow.actions.conditional", GroupingIdentifier=group, WFControlFlowMode=1),
-        None,  # end is built by the caller so its UUID can be referenced as "If Result"
-    )
-
-
-def end_if(group, ref):
-    return action("is.workflow.actions.conditional", GroupingIdentifier=group, WFControlFlowMode=2, UUID=ref)
-
-
 def workflow(actions, glyph=61440, color=-12365313):
     return {
         "WFQuickActionSurfaces": [],
@@ -74,31 +60,28 @@ def workflow(actions, glyph=61440, color=-12365313):
 
 
 def main_recipe():
-    """Get Clipboard → Get Images from Input → Pick a Clip (Save First: Clipboard,
-    Save Image First: Images) → If result has any value: Copy to Clipboard.
+    """Get Clipboard -> Pick a Clip (Save First: Clipboard) -> Copy to Clipboard.
 
-    No If around capture: Get Images from Input is empty for text, so Save Image First
-    is simply nil then, and Klypst prefers the image when both arrive. The remaining If
-    keeps an empty result (an image Klypst copied itself) from clearing the clipboard."""
-    clipboard, images, pick, end = (uid() for _ in range(4))
-    group = uid()
-    if_, else_, _ = if_block(group, ("Pick a Clip", pick))
+    Deliberately linear. Wiring an empty variable (Get Images from Input on a text
+    clipboard) into a file parameter fails resolution before the picker card can
+    appear, so images live in `image_recipe` instead."""
+    clipboard, pick = uid(), uid()
     return workflow([
         action("is.workflow.actions.getclipboard", UUID=clipboard),
-        action("is.workflow.actions.detect.images", UUID=images, WFInput=attachment("Clipboard", clipboard)),
-        intent("PickClipIntent", pick, saveFirst=token_string("Clipboard", clipboard), saveImageFirst=attachment("Images", images)),
-        if_,
+        intent("PickClipIntent", pick, saveFirst=token_string("Clipboard", clipboard)),
         action("is.workflow.actions.setclipboard", WFInput=attachment("Pick a Clip", pick)),
-        else_,
-        end_if(group, end),
     ])
 
 
 def image_recipe():
-    """Pick an Image Clip → Copy to Clipboard. Never opens Klypst."""
-    pick = uid()
+    """Get Clipboard -> Get Images from Input -> Pick an Image Clip (Save First: Images)
+    -> Copy to Clipboard. For Back Tap: saves a freshly copied image and pastes any saved
+    one. Get Images from Input yields nothing for text, leaving Save First nil."""
+    clipboard, images, pick = uid(), uid(), uid()
     return workflow([
-        intent("PickImageClipIntent", pick),
+        action("is.workflow.actions.getclipboard", UUID=clipboard),
+        action("is.workflow.actions.detect.images", UUID=images, WFInput=attachment("Clipboard", clipboard)),
+        intent("PickImageClipIntent", pick, saveFirst=attachment("Images", images)),
         action("is.workflow.actions.setclipboard", WFInput=attachment("Pick an Image Clip", pick)),
     ], glyph=59511)
 

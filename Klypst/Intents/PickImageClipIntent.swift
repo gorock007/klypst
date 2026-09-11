@@ -6,7 +6,12 @@ import KlypstCore
 /// system list and returns the chosen one as a file, which Shortcuts' own
 /// "Copy to Clipboard" accepts. Like the text picker, this never opens Klypst.
 ///
-/// Recommended shortcut: Pick an Image Clip → Copy to Clipboard.
+/// Save First takes the copied image (via Get Images from Input, which yields nothing
+/// when the clipboard holds text, so the parameter is simply nil then). That makes one
+/// Back Tap both save a freshly copied image and offer every saved image to paste.
+///
+/// Recommended shortcut: Get Clipboard → Get Images from Input → Pick an Image Clip
+/// (Save First: Images) → Copy to Clipboard.
 struct PickImageClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Pick an Image Clip"
     static let description = IntentDescription(
@@ -19,10 +24,14 @@ struct PickImageClipIntent: AppIntent {
 
     static var parameterSummary: some ParameterSummary {
         Summary("Pick an image clip") {
+            \.$saveFirst
             \.$clip
             \.$limit
         }
     }
+
+    @Parameter(title: "Save First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) to save a copied image before picking.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
+    var saveFirst: IntentFile?
 
     // Never auto-connected: otherwise Shortcuts wires the previous result into it
     // and skips the picker.
@@ -36,6 +45,12 @@ struct PickImageClipIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
+
+        if let saveFirst, let data = try? await saveFirst.data, !data.isEmpty {
+            _ = try? await repository.save(.image(data, via: .intent))
+            environment.markClipboardSeen()
+            environment.state.bumpChangeToken()
+        }
 
         let chosen: ClipEntity
         if let clip {

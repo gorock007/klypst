@@ -13,14 +13,16 @@ import KlypstCore
 /// Copy. With nothing selected, Copy returns the newest clip, which is
 /// the one just saved, so the copy is a no-op.
 ///
-/// Images can be captured here (Save Image First) but not pasted: a snippet's Copy
-/// button returns text to Shortcuts, which can't carry an image. Paste a saved image
-/// with the separate "Pick an Image Clip → Copy to Clipboard" shortcut, which returns
-/// a file. So the picker lists text and links only.
+/// Text and links only, in both directions. A snippet's Copy button returns text to
+/// Shortcuts, which can't carry an image, and a copied image reaching the Save First
+/// string arrives as Shortcuts' placeholder file name, which `ShortcutsCoercion`
+/// discards. Images are handled end to end by `PickImageClipIntent`.
+///
+/// Keep the recipe linear: an empty variable wired into a file parameter fails
+/// parameter resolution before the card can appear (observed on device, 11 Sep 2026).
 ///
 /// Recommended shortcut (see `KlypstLinks.actionButtonShortcutFile`):
-/// Get Clipboard → Get Images from Input → Pick a Clip (Save First: Clipboard, Save Image
-/// First: Images) → If result has any value: Copy to Clipboard.
+/// Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard.
 struct PickClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Pick a Clip"
     static let description = IntentDescription(
@@ -43,7 +45,6 @@ struct PickClipIntent: AppIntent {
     static var parameterSummary: some ParameterSummary {
         Summary("Pick a clip") {
             \.$saveFirst
-            \.$saveImageFirst
             \.$clip
             \.$limit
             \.$style
@@ -67,12 +68,6 @@ struct PickClipIntent: AppIntent {
     @Parameter(title: "Save First", description: "Optional. Pass the Clipboard variable to save what you last copied before picking.", inputConnectionBehavior: .connectToPreviousIntentResult)
     var saveFirst: String?
 
-    // Never auto-connected: Shortcuts would try to turn a text clipboard into an image.
-    // The recipe wires it to "Get Images from Input" (empty for text, so this is nil),
-    // and Save First to the Clipboard variable. When both arrive, the image wins.
-    @Parameter(title: "Save Image First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) to save a copied image before picking. Takes priority over Save First.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
-    var saveImageFirst: IntentFile?
-
     @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.", inputConnectionBehavior: .never)
     var clip: ClipEntity?
 
@@ -87,11 +82,7 @@ struct PickClipIntent: AppIntent {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
 
-        if let saveImageFirst, let data = try? await saveImageFirst.data, !data.isEmpty {
-            _ = try? await repository.save(.image(data, via: .intent))
-            environment.markClipboardSeen()
-            environment.state.bumpChangeToken()
-        } else if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst) {
+        if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst) {
             _ = try? await repository.save(.text(text, via: .intent))
             environment.markClipboardSeen()
             environment.state.bumpChangeToken()
