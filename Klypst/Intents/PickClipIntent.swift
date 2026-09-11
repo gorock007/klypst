@@ -82,10 +82,16 @@ struct PickClipIntent: AppIntent {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
 
-        if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst, clipboard: environment.clipboard.availability()) {
-            _ = try? await repository.save(.text(text, via: .intent))
-            environment.markClipboardSeen()
-            environment.state.bumpChangeToken()
+        if let saveFirst {
+            // Never logs the string itself, only what the pasteboard advertised.
+            let availability = environment.clipboard.availability()
+            if let text = ShortcutsCoercion.textToSave(saveFirst, clipboard: availability) {
+                _ = try? await repository.save(.text(text, via: .intent))
+                environment.markClipboardSeen()
+                environment.state.bumpChangeToken()
+            } else {
+                KlypstLog.intents.info("Save First skipped (hasText: \(availability.hasText, privacy: .public), hasImage: \(availability.hasImage, privacy: .public), generatedName: \(ShortcutsCoercion.looksLikeGeneratedImageName(saveFirst), privacy: .public)).")
+            }
         }
 
         let chosen: ClipEntity

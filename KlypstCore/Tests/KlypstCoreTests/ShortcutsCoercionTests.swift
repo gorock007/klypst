@@ -9,8 +9,9 @@ struct ShortcutsCoercionTests {
 
     @Test func keepsRealText() {
         #expect(ShortcutsCoercion.textToSave("  39 delhi road, north \n", clipboard: textOnly) == "39 delhi road, north")
-        #expect(ShortcutsCoercion.textToSave("https://apple.com", clipboard: textOnly) == "https://apple.com")
-        #expect(ShortcutsCoercion.textToSave("Clipboard notes for Monday", clipboard: textOnly) == "Clipboard notes for Monday")
+        #expect(ShortcutsCoercion.textToSave("https://sprint.buildclub.ai/", clipboard: textOnly) == "https://sprint.buildclub.ai/")
+        let sentence = "Joe and Angela's marriage is on thin ice. When their upstairs neighbors visit for a dinner party, the night spirals."
+        #expect(ShortcutsCoercion.textToSave(sentence, clipboard: both) == sentence)
     }
 
     @Test func dropsEmpty() {
@@ -19,18 +20,34 @@ struct ShortcutsCoercionTests {
     }
 
     @Test func dropsAnythingWhenTheClipboardIsAnImageOnly() {
-        // Whatever Shortcuts substituted, it isn't text the user copied.
-        #expect(ShortcutsCoercion.textToSave("Clipboard 11 Sep 2026 at 2.04.png", clipboard: imageOnly) == nil)
+        #expect(ShortcutsCoercion.textToSave("Clipboard 11 Sep 2026 at 2.33.28 pm.png", clipboard: imageOnly) == nil)
         #expect(ShortcutsCoercion.textToSave("Klypst Clip", clipboard: imageOnly) == nil)
-        #expect(ShortcutsCoercion.textToSave("IMG_5077", clipboard: imageOnly) == nil)
+        #expect(ShortcutsCoercion.textToSave("anything at all", clipboard: imageOnly) == nil)
     }
 
-    @Test func dropsOnlyFileNamesWhenTheClipboardHasTextToo() {
-        #expect(ShortcutsCoercion.textToSave("Klypst Clip.png", clipboard: both) == nil)
-        #expect(ShortcutsCoercion.textToSave("Clipboard 11 Sep 2026 at 2.04.HEIC", clipboard: both) == nil)
-        // Real text survives, including text that merely mentions a file.
-        #expect(ShortcutsCoercion.textToSave("Send me logo.png when you can", clipboard: both) == "Send me logo.png when you can")
-        #expect(ShortcutsCoercion.textToSave("line one\nlogo.png", clipboard: both) == "line one\nlogo.png")
+    @Test func dropsGeneratedNamesWhenTheClipboardHasTextToo() {
+        for name in [
+            "Clipboard 11 Sep 2026 at 2.33.28 pm.png",
+            "Clipboard 11 Sep 2026 at 2.33 pm",     // no extension: the case that slipped through
+            "Klypst Clip",
+            "Klypst Clip.png",
+            "IMG_5077",
+            "Screenshot 2026-09-11 at 2.33.28 pm",
+            "Pasted Image",
+        ] {
+            #expect(ShortcutsCoercion.textToSave(name, clipboard: both) == nil, "should drop \(name)")
+        }
+    }
+
+    @Test func keepsProseThatMerelyResemblesAName() {
+        for text in [
+            "Send me logo.png when you can",
+            "Clipboard managers are having a moment, and here is why that matters for iPhone users",
+            "line one\nClipboard 11 Sep 2026",
+            "Image quality was terrible on the trailer",
+        ] {
+            #expect(ShortcutsCoercion.textToSave(text, clipboard: both) == text, "should keep \(text)")
+        }
     }
 
     @Test func keepsTextWhenTheClipboardStateIsUnknown() {
