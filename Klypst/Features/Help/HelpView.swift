@@ -7,16 +7,20 @@ struct HelpView: View {
             Group {
                 Section {
                     Text("Copy anything — text, a link or an image — and press the Action Button to save it. Press again to pick any earlier clip and paste it, without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts.")
-                    if let link = KlypstLinks.actionButtonShortcut {
-                        Link(destination: link) {
+                    if let file = KlypstLinks.actionButtonShortcutFile {
+                        ShareLink(item: file, preview: SharePreview("Klypst shortcut", image: Image(.mascotSmall))) {
                             Label("Add the Klypst shortcut", systemImage: "plus.app")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.brandPrimary)
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                        .accessibilityHint("Opens the Shortcuts app with the ready-made shortcut. Tap Add Shortcut there.")
-                        Text("One tap adds the ready-made shortcut. Then:")
-                        step(1, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose **Klypst**.")
+                        .accessibilityHint("Shares the ready-made shortcut. Choose Shortcuts in the sheet, then tap Add Shortcut.")
+                        step(1, "In the sheet, choose **Shortcuts**, then tap **Add Shortcut**.")
+                        step(2, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose **Klypst**.")
+                        if let link = KlypstLinks.actionButtonShortcut {
+                            Link("Shortcuts not in the sheet? Open the iCloud link instead.", destination: link)
+                                .font(.subheadline)
+                        }
                         DisclosureGroup("Or build it yourself") {
                             manualRecipeSteps
                         }
@@ -35,10 +39,11 @@ struct HelpView: View {
                 Section {
                     Text("The Action Button shortcut saves images too, and lists them on the card with a thumbnail. When you pick an image, Klypst opens for a moment to put it on your clipboard — iOS doesn’t let Shortcuts receive an image from the picker — then swipe back and paste.")
                     Text("Prefer images without opening Klypst? Add a second shortcut, **Pick an Image Clip** followed by **Copy to Clipboard**, and run it from **Back Tap** (Settings → Accessibility → Touch) or a Control Center shortcut button.")
-                    if let link = KlypstLinks.imageShortcut {
-                        Link(destination: link) {
+                    if let file = KlypstLinks.imageShortcutFile {
+                        ShareLink(item: file, preview: SharePreview("Klypst Images shortcut", image: Image(.mascotSmall))) {
                             Label("Add the image shortcut", systemImage: "photo.badge.plus")
                         }
+                        .accessibilityHint("Shares the ready-made shortcut. Choose Shortcuts in the sheet, then tap Add Shortcut.")
                     }
                 } header: {
                     Text("Images")

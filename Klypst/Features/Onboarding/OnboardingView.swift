@@ -23,7 +23,7 @@ struct OnboardingView: View {
             visual: .glyph("button.horizontal.top.press"),
             title: "Keep it one press away.",
             body: "Set up the Action Button for the fastest path back to recent clips.",
-            link: KlypstLinks.actionButtonShortcut.map { Page.Link(title: "Add the Klypst shortcut", url: $0) }
+            link: (KlypstLinks.actionButtonShortcutFile ?? KlypstLinks.actionButtonShortcut).map { Page.Link(title: "Add the Klypst shortcut", url: $0) }
         ),
         Page(
             visual: .glyph("lock"),
@@ -133,14 +133,21 @@ struct OnboardingView: View {
                 .padding(.top, 10)
                 .padding(.bottom, item.link == nil ? 24 : 16)
             if let link = item.link {
-                SwiftUI.Link(destination: link.url) {
-                    Label(link.title, systemImage: "plus.app")
-                        .font(.body.weight(.semibold))
+                Group {
+                    if link.url.isFileURL {
+                        ShareLink(item: link.url, preview: SharePreview("Klypst shortcut", image: Image(.mascotSmall))) {
+                            Label(link.title, systemImage: "plus.app").font(.body.weight(.semibold))
+                        }
+                    } else {
+                        SwiftUI.Link(destination: link.url) {
+                            Label(link.title, systemImage: "plus.app").font(.body.weight(.semibold))
+                        }
+                    }
                 }
                 .buttonStyle(.bordered)
                 .tint(.accentColor)
                 .padding(.bottom, 24)
-                .accessibilityHint("Opens the Shortcuts app with the ready-made Action Button shortcut.")
+                .accessibilityHint("Shares the ready-made Action Button shortcut. Choose Shortcuts, then Add Shortcut.")
             }
         }
     }
