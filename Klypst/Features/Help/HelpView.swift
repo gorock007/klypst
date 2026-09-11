@@ -17,7 +17,7 @@ struct HelpView: View {
                 } header: {
                     Text("Set up the Action Button")
                 } footer: {
-                    Text("Each press saves what you last copied, then shows your clips on the Klypst card. Tap one, then **Continue**, and it’s on your clipboard. If you only wanted to save, just tap Continue: the top clip is what you just copied. Prefer a single tap? Set **Style** in Pick a Clip to **Quick List** for the plain system list. The first run asks whether the shortcut may use the clipboard — choose Always Allow. Images can’t go through this recipe; save them with the Share Sheet and copy them from the Klypst app.")
+                    Text("Each press saves what you last copied, then shows your clips on the Klypst card. Tap one, then **Copy**, and it’s on your clipboard. If you only wanted to save, just tap Copy: the top clip is what you just copied. Prefer a single tap? Set **Style** in Pick a Clip to **Quick List** for the plain system list. The first run asks whether the shortcut may use the clipboard — choose Always Allow. Images can’t go through this recipe; save them with the Share Sheet and copy them from the Klypst app.")
                 }
 
                 Section {

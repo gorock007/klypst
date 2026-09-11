@@ -15,7 +15,7 @@ final class PickerFlowTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testPickerCardSelectsAndContinues() throws {
+    func testPickerCardSelectsAndCopies() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--reset-state", "--skip-onboarding", "--seed-sample-clips"]
         app.launch()
@@ -51,12 +51,12 @@ final class PickerFlowTests: XCTestCase {
         sleep(2)
         save("03-selected")
 
-        let cont = host.buttons["Continue"]
-        XCTAssertTrue(cont.waitForExistence(timeout: 5), "Continue button missing")
+        let cont = host.buttons["Copy"]
+        XCTAssertTrue(cont.waitForExistence(timeout: 5), "Copy button missing")
         cont.tap()
         sleep(2)
         save("04-after-continue")
-        XCTAssertFalse(header.exists, "Card should close after Continue")
+        XCTAssertFalse(header.exists, "Card should close after Copy")
     }
 
     private func openSpotlight() {

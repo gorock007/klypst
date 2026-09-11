@@ -7,10 +7,10 @@ import KlypstCore
 /// Followed by Shortcuts' own "Copy to Clipboard" this never opens Klypst,
 /// because Shortcuts performs the pasteboard write.
 ///
-/// Two styles: the Klypst card (tap a clip, then the system Continue button) and
+/// Two styles: the Klypst card (tap a clip, then the system Copy button) and
 /// the plain system list (one tap). A snippet row can't return a value to the
 /// shortcut on its own; only the confirmation button can, so the card needs
-/// Continue. With nothing selected, Continue returns the newest clip, which is
+/// Copy. With nothing selected, Copy returns the newest clip, which is
 /// the one just saved, so the copy is a no-op.
 ///
 /// Recommended shortcut: Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard.
@@ -23,6 +23,15 @@ struct PickClipIntent: AppIntent {
     )
     static let supportedModes: IntentModes = .background
     static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
+
+    /// Labels for the system confirmation buttons under the card. The button
+    /// colors and layout are the host's; only the words are ours.
+    static let copyAction: ConfirmationActionName = .custom(
+        acceptLabel: "Copy",
+        acceptAlternatives: ["copy it", "copy that", "yes"],
+        denyLabel: "Cancel",
+        denyAlternatives: ["no", "never mind"]
+    )
 
     static var parameterSummary: some ParameterSummary {
         Summary("Pick a clip") {
@@ -39,7 +48,7 @@ struct PickClipIntent: AppIntent {
 
         static let typeDisplayRepresentation: TypeDisplayRepresentation = "Picker Style"
         static let caseDisplayRepresentations: [Style: DisplayRepresentation] = [
-            .card: DisplayRepresentation(title: "Klypst Card", subtitle: "Tap a clip, then Continue"),
+            .card: DisplayRepresentation(title: "Klypst Card", subtitle: "Tap a clip, then Copy"),
             .list: DisplayRepresentation(title: "Quick List", subtitle: "Plain system list, one tap"),
         ]
     }
@@ -56,7 +65,7 @@ struct PickClipIntent: AppIntent {
     @Parameter(title: "Show", description: "How many recent clips to offer.", default: 5, inclusiveRange: (1, 25))
     var limit: Int
 
-    @Parameter(title: "Style", description: "Klypst Card shows your clips on the Klypst card: tap one, then Continue. Quick List is the plain system list, where one tap picks.", default: .card)
+    @Parameter(title: "Style", description: "Klypst Card shows your clips on the Klypst card: tap one, then Copy. Quick List is the plain system list, where one tap picks.", default: .card)
     var style: Style
 
     @MainActor
@@ -87,7 +96,7 @@ struct PickClipIntent: AppIntent {
             case .card:
                 environment.state.pickerSession = ClipPickerSession(clips: candidates, selectedID: nil)
                 defer { environment.state.pickerSession = nil }
-                chosen = try await requestConfirmation(actionName: .continue, snippetIntent: ClipPickerSnippetIntent())
+                chosen = try await requestConfirmation(actionName: Self.copyAction, snippetIntent: ClipPickerSnippetIntent())
             case .list:
                 chosen = try await $clip.requestDisambiguation(
                     among: candidates.map(ClipEntity.init(summary:)),

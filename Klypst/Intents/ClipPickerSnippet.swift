@@ -7,7 +7,7 @@ import SwiftUI
 /// while the card is on screen.
 struct ClipPickerSession: Equatable {
     var clips: [ClipSummary]
-    /// Nil until the user taps a row. Continue with no selection returns the
+    /// Nil until the user taps a row. Copy with no selection returns the
     /// most recent clip, which is what was just saved, so it is a no-op copy.
     var selectedID: UUID?
 
@@ -17,7 +17,7 @@ struct ClipPickerSession: Equatable {
 }
 
 /// The card shown by `PickClipIntent` through `requestConfirmation(snippetIntent:)`.
-/// Its value is the clip returned when the user taps the system Continue button.
+/// Its value is the clip returned when the user taps the system Copy button.
 struct ClipPickerSnippetIntent: SnippetIntent {
     static let title: LocalizedStringResource = "Clip Picker"
     static let isDiscoverable = false
@@ -62,7 +62,7 @@ struct SelectPickerClipIntent: AppIntent {
     }
 }
 
-/// Card body: tapping a row selects it; the system's Continue button returns it.
+/// Card body: tapping a row selects it; the system's Copy button returns it.
 struct ClipPickerCardView: View {
     let clips: [ClipEntity]
     let selectedID: UUID?
@@ -77,7 +77,7 @@ struct ClipPickerCardView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(clip.accessibilityDescription)
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
-                .accessibilityHint(isSelected ? "Selected. Tap Continue to copy it." : "Selects this clip.")
+                .accessibilityHint(isSelected ? "Selected. Tap Copy to copy it." : "Selects this clip.")
             }
         }
     }

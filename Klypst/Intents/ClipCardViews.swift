@@ -7,7 +7,7 @@ import SwiftUI
 // SwiftUI is used: semantic colors, SF Symbols, bundled images, gradients.
 // `Color.accentColor` resolves to the host's tint (system blue) there, so the
 // brand orange is an explicit value. iOS owns the container, its material, and
-// any Cancel/Continue chrome; this file only draws the content inside it.
+// any Cancel/Copy chrome; this file only draws the content inside it.
 
 enum ClipCard {
     /// Klypst orange, #FF5A36. Explicit because the accent color is not ours in a snippet.
@@ -106,6 +106,8 @@ struct ClipCardRow: View {
                     shape.strokeBorder(ClipCard.orange.opacity(0.6), lineWidth: 1)
                 }
             }
+            // Liquid Glass where the host renders it; the fill above is the fallback.
+            .glassEffect(isHighlighted ? .regular.tint(ClipCard.orange.opacity(0.12)) : .identity, in: shape)
             .contentShape(Rectangle())
 
             if showsDivider {
@@ -142,6 +144,7 @@ struct ClipKindTile: View {
         }
         .frame(width: size, height: size)
         .clipShape(shape)
+        .glassEffect(style == .image ? .identity : .regular, in: shape)
         .accessibilityHidden(true)
     }
 }
