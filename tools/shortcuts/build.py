@@ -60,33 +60,32 @@ def workflow(actions, glyph=61440, color=-12365313):
 
 
 def main_recipe():
-    """Get Clipboard -> Get Images from Input -> Pick a Clip (Save First: Clipboard,
-    Save Image First: Images) -> Copy to Clipboard.
+    """Get Clipboard -> Pick a Clip (Save First: Clipboard, Copied Image: Clipboard)
+    -> Copy to Clipboard.
 
-    One shortcut for text, links and images. Linear on purpose: hand-built If blocks
-    broke the picker card on device, while an empty variable in a file parameter is fine
-    (proven by the image recipe). Pick a Clip returns a file, which Copy to Clipboard
-    pastes as an image or, for a plain-text file, as text."""
-    clipboard, images, pick = uid(), uid(), uid()
+    One shortcut for text, links and images, and deliberately linear. The Clipboard
+    variable goes into both parameters: the string gets text, a link, or an image's file
+    name; the file gets a text file, nothing, or the image. Klypst uses the file only when
+    it decodes as an image. Never add Get Images from Input here: on copied text it
+    renders the text into a PNG (measured with Shortcuts on macOS 26, 11 Sep 2026)."""
+    clipboard, pick = uid(), uid()
     return workflow([
         action("is.workflow.actions.getclipboard", UUID=clipboard),
-        action("is.workflow.actions.detect.images", UUID=images, WFInput=attachment("Clipboard", clipboard)),
         intent("PickClipIntent", pick,
                saveFirst=token_string("Clipboard", clipboard),
-               saveImageFirst=attachment("Images", images)),
+               copiedImage=attachment("Clipboard", clipboard)),
         action("is.workflow.actions.setclipboard", WFInput=attachment("Pick a Clip", pick)),
     ])
 
 
 def image_recipe():
-    """Get Clipboard -> Get Images from Input -> Pick an Image Clip (Save First: Images)
-    -> Copy to Clipboard. Optional images-only alternative, kept for anyone who wants a
-    second trigger that skips text entirely."""
-    clipboard, images, pick = uid(), uid(), uid()
+    """Get Clipboard -> Pick an Image Clip (Save First: Clipboard) -> Copy to Clipboard.
+    Optional images-only alternative for anyone who wants a second trigger that skips
+    text entirely. Same wiring rule as `main_recipe`: the Clipboard goes straight in."""
+    clipboard, pick = uid(), uid()
     return workflow([
         action("is.workflow.actions.getclipboard", UUID=clipboard),
-        action("is.workflow.actions.detect.images", UUID=images, WFInput=attachment("Clipboard", clipboard)),
-        intent("PickImageClipIntent", pick, saveFirst=attachment("Images", images)),
+        intent("PickImageClipIntent", pick, saveFirst=attachment("Clipboard", clipboard)),
         action("is.workflow.actions.setclipboard", WFInput=attachment("Pick an Image Clip", pick)),
     ], glyph=59511)
 

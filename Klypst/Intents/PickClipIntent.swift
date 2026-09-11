@@ -7,21 +7,25 @@ import UniformTypeIdentifiers
 /// and returns the chosen one. Followed by Shortcuts' own "Copy to Clipboard" this never
 /// opens Klypst, because Shortcuts performs the pasteboard write.
 ///
-/// Text and images both flow through here. Shortcuts coerces a copied image into a file
-/// name when it lands in a string parameter, so the recipe also passes Get Images from
-/// Input: whenever an image arrives, the string is an artifact and is ignored outright.
-/// That check is deterministic, unlike `UIPasteboard`'s `has*` flags, which are not
-/// dependable from an intent running in the background.
+/// The recipe passes the Clipboard variable twice: into Save First (a string) and into
+/// Copied Image (a file). Shortcuts fills the string with an image's file name, and fills
+/// the file parameter with whatever the clipboard holds: text becomes a tiny text file,
+/// an image stays an image, a link becomes nothing. Only a real image in the file
+/// parameter is used; then the string is an artifact and is ignored outright.
+///
+/// The file parameter accepts images, plain text and URLs on purpose. Measured with
+/// Shortcuts on macOS 26 (11 Sep 2026): an image-only file parameter makes Shortcuts
+/// *render copied text into a PNG* (Get Images from Input does the same), and a
+/// parameter without `.url` makes it *download* a copied link. Accepting all three is
+/// the only shape that never renders, never downloads and never blocks the action.
+/// `UIPasteboard`'s `has*` flags are no alternative: not dependable in the background.
 ///
 /// The result is an `IntentFile` rather than text, because a value that must sometimes
 /// carry an image cannot be a `String`. Text clips come back as a plain-text file, which
 /// Copy to Clipboard puts on the clipboard as text.
 ///
-/// Keep the recipe linear. Hand-built If blocks broke the picker card on device
-/// (11 Sep 2026); an empty variable wired into a file parameter is fine.
-///
-/// Recommended shortcut: Get Clipboard → Get Images from Input → Pick a Clip
-/// (Save First: Clipboard, Save Image First: Images) → Copy to Clipboard.
+/// Recommended shortcut: Get Clipboard → Pick a Clip (Save First: Clipboard,
+/// Copied Image: Clipboard) → Copy to Clipboard. Keep it linear; no Get Images from Input.
 struct PickClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Pick a Clip"
     static let description = IntentDescription(
@@ -44,7 +48,7 @@ struct PickClipIntent: AppIntent {
     static var parameterSummary: some ParameterSummary {
         Summary("Pick a clip") {
             \.$saveFirst
-            \.$saveImageFirst
+            \.$copiedImage
             \.$clip
             \.$limit
             \.$style
@@ -68,8 +72,10 @@ struct PickClipIntent: AppIntent {
     @Parameter(title: "Save First", description: "Optional. Pass the Clipboard variable to save what you last copied before picking.", inputConnectionBehavior: .connectToPreviousIntentResult)
     var saveFirst: String?
 
-    @Parameter(title: "Save Image First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) so copied images are saved too. Wins over Save First.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
-    var saveImageFirst: IntentFile?
+    // Accepts text and URLs as well as images so Shortcuts never renders text into a
+    // picture or downloads a link to satisfy the parameter; see the type comment.
+    @Parameter(title: "Copied Image", description: "Optional. Pass the Clipboard variable here as well, so a copied image is saved too. Text and links are handled by Save First.", supportedContentTypes: [.image, .plainText, .url], inputConnectionBehavior: .never)
+    var copiedImage: IntentFile?
 
     @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.", inputConnectionBehavior: .never)
     var clip: ClipEntity?
@@ -120,11 +126,12 @@ struct PickClipIntent: AppIntent {
         return .result(value: file)
     }
 
-    /// An image and a string can arrive together, because Shortcuts fills a string
-    /// parameter with the image's file name. The image is always the real content.
+    /// An image and a string arrive together, because Shortcuts fills a string parameter
+    /// with the image's file name. A decodable image is always the real content; a text
+    /// file in Copied Image is just the clipboard text again and is left to Save First.
     @MainActor
     private func saveWhatWasJustCopied(into repository: any ClipRepository, environment: AppEnvironment) async throws {
-        if let saveImageFirst, let data = try? await saveImageFirst.data, !data.isEmpty {
+        if let data = await ClipFile.imageData(in: copiedImage) {
             _ = try? await repository.save(.image(data, via: .intent))
             KlypstLog.intents.info("Pick intent saved a copied image; ignored any text alongside it.")
         } else if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst) {

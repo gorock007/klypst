@@ -6,12 +6,14 @@ import KlypstCore
 /// system list and returns the chosen one as a file, which Shortcuts' own
 /// "Copy to Clipboard" accepts. Like the text picker, this never opens Klypst.
 ///
-/// Save First takes the copied image (via Get Images from Input, which yields nothing
-/// when the clipboard holds text, so the parameter is simply nil then). That makes one
-/// Back Tap both save a freshly copied image and offer every saved image to paste.
+/// Save First takes the Clipboard variable directly. It accepts text and URLs as well as
+/// images for the reason documented on `PickClipIntent.copiedImage`: an image-only file
+/// parameter makes Shortcuts render copied text into a picture. Anything that is not a
+/// decodable image is ignored, so one trigger both saves a freshly copied image and
+/// offers every saved image to paste.
 ///
-/// Recommended shortcut: Get Clipboard → Get Images from Input → Pick an Image Clip
-/// (Save First: Images) → Copy to Clipboard.
+/// Recommended shortcut: Get Clipboard → Pick an Image Clip (Save First: Clipboard)
+/// → Copy to Clipboard.
 struct PickImageClipIntent: AppIntent {
     static let title: LocalizedStringResource = "Pick an Image Clip"
     static let description = IntentDescription(
@@ -30,7 +32,7 @@ struct PickImageClipIntent: AppIntent {
         }
     }
 
-    @Parameter(title: "Save First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) to save a copied image before picking.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
+    @Parameter(title: "Save First", description: "Optional. Pass the Clipboard variable to save a copied image before picking. Text is ignored.", supportedContentTypes: [.image, .plainText, .url], inputConnectionBehavior: .never)
     var saveFirst: IntentFile?
 
     // Never auto-connected: otherwise Shortcuts wires the previous result into it
@@ -46,7 +48,7 @@ struct PickImageClipIntent: AppIntent {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
 
-        if let saveFirst, let data = try? await saveFirst.data, !data.isEmpty {
+        if let data = await ClipFile.imageData(in: saveFirst) {
             _ = try? await repository.save(.image(data, via: .intent))
             environment.markClipboardSeen()
             environment.state.bumpChangeToken()
@@ -102,6 +104,15 @@ enum ClipFile {
         else { throw KlypstIntentError.clipNotFound }
         let fileExtension = info.contentType.preferredFilenameExtension ?? "png"
         return IntentFile(data: data, filename: "Klypst Clip.\(fileExtension)", type: info.contentType)
+    }
+
+    /// The bytes of `file` when it is a decodable image, otherwise nil. Judged from the
+    /// bytes, not the declared type: Shortcuts hands over text files and, for links,
+    /// nothing at all through the same parameter.
+    static func imageData(in file: IntentFile?) async -> Data? {
+        guard let file, let data = try? await file.data, !data.isEmpty,
+              ImagePayloadStore.inspect(data) != nil else { return nil }
+        return data
     }
 
     private static func plainText(_ value: String) -> IntentFile {

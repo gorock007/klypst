@@ -27,7 +27,7 @@ struct HelpView: View {
                     } else {
                         Text("Build this once:")
                         manualRecipeSteps
-                        step(7, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
+                        step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
                         ShortcutsLink()
                     }
                 } header: {
@@ -119,10 +119,9 @@ struct HelpView: View {
     private var manualRecipeSteps: some View {
         step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
         step(2, "Add **Get Clipboard**.")
-        step(3, "Add **Get Images from Input** and set its input to the **Clipboard** variable. It returns the image when you copied one, and nothing when you copied text.")
-        step(4, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it: **Save First** should show the **Clipboard** token, **Save Image First** should show **Images**, and **Clip** stays empty.")
-        step(5, "Add **Copy to Clipboard** and set its field to the **Pick a Clip** variable.")
-        step(6, "Name it **Klypst** and tap Done.")
+        step(3, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it: **Save First** should show the **Clipboard** token. Set **Copied Image** to the **Clipboard** variable as well, and leave **Clip** empty.")
+        step(4, "Add **Copy to Clipboard** and set its field to the **Pick a Clip** variable.")
+        step(5, "Name it **Klypst** and tap Done.")
     }
 
     private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
