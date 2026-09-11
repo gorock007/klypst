@@ -1,7 +1,6 @@
 import AppIntents
 import Foundation
 import KlypstCore
-import UIKit
 
 /// The one-action picker for Shortcuts. Optionally saves the clipboard first,
 /// shows the user's recent text/link clips, and returns the chosen clip's text.
@@ -14,11 +13,10 @@ import UIKit
 /// Copy. With nothing selected, Copy returns the newest clip, which is
 /// the one just saved, so the copy is a no-op.
 ///
-/// Images: Shortcuts can't receive an image from an action that returns text, so when
-/// an image clip is picked Klypst continues in the foreground, writes the image to the
-/// pasteboard itself (as `CopyClipIntent` does), and returns an empty string. The
-/// recipe wraps Copy to Clipboard in "If … has any value" so that empty result never
-/// overwrites the image.
+/// Images can be captured here (Save Image First) but not pasted: a snippet's Copy
+/// button returns text to Shortcuts, which can't carry an image. Paste a saved image
+/// with the separate "Pick an Image Clip → Copy to Clipboard" shortcut, which returns
+/// a file. So the picker lists text and links only.
 ///
 /// Recommended shortcut (see `KlypstLinks.actionButtonShortcutFile`):
 /// Get Clipboard → Get Images from Input → Pick a Clip (Save First: Clipboard, Save Image
@@ -30,7 +28,7 @@ struct PickClipIntent: AppIntent {
         categoryName: "Retrieve",
         searchKeywords: ["clipboard", "history", "paste", "choose"]
     )
-    static let supportedModes: IntentModes = [.background, .foreground(.dynamic)]
+    static let supportedModes: IntentModes = .background
     static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     /// Labels for the system confirmation buttons under the card. The button
@@ -46,7 +44,6 @@ struct PickClipIntent: AppIntent {
         Summary("Pick a clip") {
             \.$saveFirst
             \.$saveImageFirst
-            \.$includeImages
             \.$clip
             \.$limit
             \.$style
@@ -75,9 +72,6 @@ struct PickClipIntent: AppIntent {
     // and Save First to the Clipboard variable. When both arrive, the image wins.
     @Parameter(title: "Save Image First", description: "Optional. Pass Get Images from Input (run on the Clipboard variable) to save a copied image before picking. Takes priority over Save First.", supportedContentTypes: [.image], inputConnectionBehavior: .never)
     var saveImageFirst: IntentFile?
-
-    @Parameter(title: "Include Images", description: "Offer image clips too. Picking an image copies it from Klypst directly and returns nothing, so put Copy to Clipboard inside an If … has any value.", default: true)
-    var includeImages: Bool
 
     @Parameter(title: "Clip", description: "Leave empty to be asked each time the shortcut runs.", inputConnectionBehavior: .never)
     var clip: ClipEntity?
@@ -111,7 +105,7 @@ struct PickClipIntent: AppIntent {
             let recent = try await repository.recent(limit: limit + 5)
             var seen = Set<UUID>()
             let candidates = Array((pinned + recent)
-                .filter { includeImages || $0.kind != .image }
+                .filter { $0.kind != .image }
                 .filter { seen.insert($0.id).inserted }
                 .prefix(limit))
             guard !candidates.isEmpty else { throw KlypstIntentError.noClips }
@@ -134,24 +128,7 @@ struct PickClipIntent: AppIntent {
         switch content.kind {
         case .text: text = content.text ?? ""
         case .url: text = content.url?.absoluteString ?? ""
-        case .image:
-            // iOS discards pasteboard writes from a backgrounded process, so bring
-            // the app forward first, write the image here, and hand Shortcuts nothing.
-            if UIApplication.shared.applicationState != .active {
-                KlypstLog.intents.info("Pick intent chose an image while backgrounded; continuing in foreground.")
-                try await continueInForeground("Klypst needs to open briefly to copy this image.", alwaysConfirm: false)
-            }
-            let tookEffect: Bool
-            do {
-                tookEffect = try await environment.copyClip(id: chosen.id)
-            } catch {
-                KlypstLog.intents.error("Pick intent image copy failed: \(String(describing: type(of: error)), privacy: .public)")
-                throw KlypstIntentError.copyFailed
-            }
-            guard tookEffect else { throw KlypstIntentError.copyFailed }
-            environment.state.showToast("Copied — go back to paste")
-            KlypstLog.intents.info("Pick intent copied an image clip in-process.")
-            return .result(value: "")
+        case .image: throw KlypstIntentError.imageNotText
         }
         guard !text.isEmpty else { throw KlypstIntentError.clipNotFound }
         try? await repository.markUsed(id: chosen.id)

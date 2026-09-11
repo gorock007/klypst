@@ -33,12 +33,11 @@ struct HelpView: View {
                 } header: {
                     Text("Set up the Action Button")
                 } footer: {
-                    Text("Each press saves what you last copied, then shows your clips on the Klypst card. Tap one, then **Copy**, and it’s on your clipboard. If you only wanted to save, just tap Copy: the top clip is what you just copied. Prefer a single tap? Set **Style** in Pick a Clip to **Quick List** for the plain system list. The first run asks whether the shortcut may use the clipboard — choose Always Allow.")
+                    Text("Each press saves what you last copied — text, a link or an image — then shows your text and link clips on the Klypst card. Tap one, then **Copy**, and it’s on your clipboard. If you only wanted to save, just tap Copy: the top clip is what you just copied. Prefer a single tap? Set **Style** in Pick a Clip to **Quick List** for the plain system list. The first run asks whether the shortcut may use the clipboard — choose Always Allow.")
                 }
 
                 Section {
-                    Text("The Action Button shortcut saves images too, and lists them on the card with a thumbnail. When you pick an image, Klypst opens for a moment to put it on your clipboard — iOS doesn’t let Shortcuts receive an image from the picker — then swipe back and paste.")
-                    Text("Prefer images without opening Klypst? Add a second shortcut, **Pick an Image Clip** followed by **Copy to Clipboard**, and run it from **Back Tap** (Settings → Accessibility → Touch) or a Control Center shortcut button.")
+                    Text("Copy an image and press the Action Button: it’s saved, just like text. The picker card shows text and links only, because iOS won’t let it hand an image back to a paste step. To paste a saved image, add the **image shortcut** below and run it from **Back Tap** (Settings → Accessibility → Touch) or a Control Center shortcut button — it lists your image clips and copies the one you pick, without opening Klypst.")
                     if let file = KlypstLinks.imageShortcutFile {
                         ShareLink(item: file, preview: SharePreview("Klypst Images shortcut", image: Image(.mascotSmall))) {
                             Label("Add the image shortcut", systemImage: "photo.badge.plus")
