@@ -18,6 +18,13 @@ struct ClipListView: View {
 
     private var isEditing: Bool { editMode.isEditing }
 
+    /// Until the shortcut has run once, or the person said Later.
+    private var showsSetupCard: Bool {
+        _ = state.changeToken
+        let preferences = AppEnvironment.shared.preferences
+        return !preferences.setupProgress.isComplete && !preferences.hasDismissedSetupCard
+    }
+
     /// Selected clips in the order they appear in the list.
     private var orderedSelection: [UUID] {
         model.items.map(\.id).filter(selection.contains)
@@ -57,6 +64,13 @@ struct ClipListView: View {
                 .brandCanvas()
         } else {
             List(selection: $selection) {
+                if model.mode == .history, showsSetupCard, !isEditing, !model.isSearching {
+                    SetupCard()
+                        .listRowBackground(Color.brandBackground)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
+                        .selectionDisabled()
+                }
                 if model.mode == .history, state.showsClipboardNudge, !isEditing, !model.isSearching {
                     ClipboardNudgeCard()
                         .listRowBackground(Color.brandBackground)
@@ -362,13 +376,24 @@ struct EmptyHistoryView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 8)
                 .padding(.horizontal, 40)
-            NavigationLink { HelpView() } label: {
-                Text("Help & Setup")
-                    .font(.subheadline.weight(.semibold))
+            if AppEnvironment.shared.preferences.setupProgress.isComplete {
+                NavigationLink { HelpView() } label: {
+                    Text("Help & Setup")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .padding(.top, 20)
+            } else {
+                NavigationLink { SetupChecklistView() } label: {
+                    Text("Finish setup")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .padding(.top, 20)
+                .accessibilityIdentifier("emptyFinishSetup")
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .padding(.top, 20)
         }
     }
 }

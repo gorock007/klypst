@@ -4,7 +4,7 @@
     python3 tools/shortcuts/build.py
 
 Writes Klypst/Resources/Shortcuts/*.shortcut (signed with `shortcuts sign --mode anyone`,
-so any device can import them). Keep HelpView.manualRecipeSteps in step with `main_recipe`.
+so any device can import them). Keep ManualRecipeSteps (Klypst/Features/Setup/TriggerGuide.swift) in step with `main_recipe`.
 """
 import plistlib, subprocess, sys, uuid, pathlib
 

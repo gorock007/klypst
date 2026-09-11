@@ -90,6 +90,7 @@ struct PickClipIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
+        environment.recordShortcutRun()
 
         try await saveWhatWasJustCopied(into: repository, environment: environment)
 

@@ -148,6 +148,20 @@ final class AppEnvironment {
         state.showsClipboardNudge = false
     }
 
+    // MARK: First-run setup
+
+    /// Called by the picker intents, which run in this process: proof the shortcut and
+    /// its trigger work. Completes the setup checklist.
+    func recordShortcutRun() {
+        preferences.recordShortcutRun()
+        state.bumpChangeToken()
+    }
+
+    /// Setup preferences changed from a view; lists and cards re-read them.
+    func setupDidChange() {
+        state.bumpChangeToken()
+    }
+
     func setPinned(id: UUID, _ pinned: Bool) async throws {
         try await repository?.setPinned(id: id, pinned)
         state.bumpChangeToken()

@@ -103,4 +103,60 @@ final class KlypstUITests: XCTestCase {
         privacyPolicy.tap()
         XCTAssertTrue(app.navigationBars["Privacy Policy"].waitForExistence(timeout: 5))
     }
+
+    /// Walks the four onboarding screens, changes the trigger, and checks the setup
+    /// checklist survives into History, Settings and Help.
+    func testOnboardingSetupChecklist() {
+        app.launch()
+        let primary = app.buttons["onboardingPrimary"]
+        XCTAssertTrue(primary.waitForExistence(timeout: 5))
+        snap("10-onboarding-welcome")
+        primary.tap()
+
+        // Trigger chooser: Action Button is preselected on the simulator; pick Back Tap.
+        let backTap = app.buttons["trigger-backTap"]
+        XCTAssertTrue(backTap.waitForExistence(timeout: 5))
+        snap("11-onboarding-trigger")
+        backTap.tap()
+        XCTAssertTrue(backTap.isSelected)
+        primary.tap()
+
+        // Checklist: step 2 names the chosen trigger; mark it done by hand.
+        XCTAssertTrue(app.staticTexts["Assign it to Back Tap"].waitForExistence(timeout: 5))
+        snap("12-onboarding-setup")
+        let markAssigned = app.buttons["markAssigned"]
+        if !markAssigned.isHittable { app.swipeUp() }
+        markAssigned.tap()
+        XCTAssertTrue(app.staticTexts["1 of 3 done"].waitForExistence(timeout: 3))
+        snap("13-onboarding-setup-marked")
+        primary.tap()
+
+        snap("14-onboarding-privacy")
+        XCTAssertEqual(primary.label, "Get started")
+        primary.tap()
+
+        // History carries the unfinished setup as a card once there is a list to show it in.
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5))
+        let finish = app.buttons["emptyFinishSetup"]
+        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        snap("15-history-empty-finish-setup")
+        finish.tap()
+        XCTAssertTrue(app.navigationBars["Setup"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["1 of 3 done"].exists)
+        snap("16-setup-screen")
+        app.navigationBars.buttons.firstMatch.tap()
+
+        app.tabBars.buttons["Settings"].tap()
+        let setupRow = app.buttons["Trigger & Setup, 1 of 3"].firstMatch
+        XCTAssertTrue(setupRow.waitForExistence(timeout: 5), "Settings should show setup progress")
+        let help = app.buttons["Help & Setup"].firstMatch
+        help.tap()
+        XCTAssertTrue(app.navigationBars["Help & Setup"].waitForExistence(timeout: 5))
+        snap("17-help")
+        let actionButtonRow = app.buttons["help-trigger-actionButton"].firstMatch
+        XCTAssertTrue(actionButtonRow.waitForExistence(timeout: 3))
+        actionButtonRow.tap()
+        XCTAssertTrue(app.buttons["Use Action Button"].waitForExistence(timeout: 3))
+        snap("18-help-trigger-expanded")
+    }
 }

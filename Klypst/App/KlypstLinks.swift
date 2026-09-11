@@ -6,14 +6,13 @@ import Foundation
 /// (signed with `shortcuts sign --mode anyone`, so any device can import them). Handing
 /// one to the Shortcuts app through the share sheet imports it: the user chooses
 /// Shortcuts, then taps Add Shortcut. Regenerate the files whenever the recipe changes,
-/// and keep `HelpView.manualRecipeSteps` in step with them.
+/// and keep `ManualRecipeSteps` in step with them.
 ///
 /// The iCloud links are a fallback for the same recipes. They are snapshots: after any
 /// change, share the shortcut again and replace the URL.
 enum KlypstLinks {
-    /// The one-press recipe for the Action Button (text, links and images):
-    /// Get Clipboard → Get Images from Input → If images: Pick a Clip (Save Image First) /
-    /// Otherwise: Pick a Clip (Save First: Clipboard) → If result has any value: Copy to Clipboard.
+    /// The one-press recipe (text, links and images), assignable to any trigger:
+    /// Get Clipboard → Pick a Clip (Save First: Clipboard, Copied Image: Clipboard) → Copy to Clipboard.
     static var actionButtonShortcutFile: URL? {
         Bundle.main.url(forResource: "Klypst", withExtension: "shortcut")
     }
@@ -23,6 +22,10 @@ enum KlypstLinks {
     static var imageShortcutFile: URL? {
         Bundle.main.url(forResource: "Klypst Images", withExtension: "shortcut")
     }
+
+    /// Runs the imported shortcut by name inside the Shortcuts app (documented scheme).
+    /// Used by the setup checklist's "run it from here" so the first run needs no trigger.
+    static let runShortcut: URL? = URL(string: "shortcuts://run-shortcut?name=Klypst")
 
     static let actionButtonShortcut: URL? = URL(string: "https://www.icloud.com/shortcuts/19bbb43d509a41b79a772394531d95eb")
     static let imageShortcut: URL? = URL(string: "https://www.icloud.com/shortcuts/41380939ae51405f958fe4af6be01063")

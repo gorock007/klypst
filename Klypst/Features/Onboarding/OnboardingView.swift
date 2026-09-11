@@ -1,45 +1,35 @@
+import KlypstCore
 import SwiftUI
 
-/// Four short, behavioral screens (brand §13). Copy only claims what ships.
+/// Four screens, each with one job (brand §13): the promise, the trigger choice, the
+/// setup checklist, the privacy promise. Nothing blocks: Skip and Continue always work,
+/// and unfinished setup follows the person into History as a card.
 struct OnboardingView: View {
     let onFinish: () -> Void
     @State private var page = 0
     @State private var mascotShown = false
+    @State private var trigger = OnboardingView.initialTrigger
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private let pages: [Page] = [
-        Page(
-            visual: .mascot,
-            title: "Your clipboard remembers.",
-            body: "Save the things you copy and bring them back when you need them."
-        ),
-        Page(
-            visual: .glyph("magnifyingglass"),
-            title: "Nothing useful gets buried.",
-            body: "Find recent text, links and images in seconds."
-        ),
-        Page(
-            visual: .glyph("button.horizontal.top.press"),
-            title: "Keep it one press away.",
-            body: "Set up the Action Button for the fastest path back to recent clips.",
-            link: (KlypstLinks.actionButtonShortcutFile ?? KlypstLinks.actionButtonShortcut).map { Page.Link(title: "Add the Klypst shortcut", url: $0) }
-        ),
-        Page(
-            visual: .glyph("lock"),
-            title: "Private by default.",
-            body: "Your clipboard history stays on your iPhone. No account. No tracking."
-        ),
-    ]
+    private static var initialTrigger: CaptureTrigger {
+        let saved = AppEnvironment.shared.preferences.captureTrigger
+        return saved == .undecided ? TriggerGuide.recommended : saved
+    }
 
-    private var isLastPage: Bool { page == pages.count - 1 }
+    private enum Step: Int, CaseIterable {
+        case welcome, trigger, setup, privacy
+    }
+
+    private var step: Step { Step(rawValue: page) ?? .welcome }
+    private var isLastPage: Bool { page == Step.allCases.count - 1 }
 
     var body: some View {
         VStack(spacing: 0) {
             TabView(selection: $page) {
-                ForEach(Array(pages.enumerated()), id: \.offset) { index, item in
+                ForEach(Step.allCases, id: \.rawValue) { item in
                     pageView(item)
-                        .tag(index)
+                        .tag(item.rawValue)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -48,11 +38,7 @@ struct OnboardingView: View {
                 .padding(.bottom, 20)
 
             Button {
-                if isLastPage {
-                    onFinish()
-                } else {
-                    withAnimation(reduceMotion ? nil : Brand.Motion.settle) { page += 1 }
-                }
+                advance()
             } label: {
                 Text(isLastPage ? "Get started" : "Continue")
             }
@@ -76,38 +62,109 @@ struct OnboardingView: View {
                 withAnimation(Brand.Motion.settle.delay(0.1)) { mascotShown = true }
             }
         }
+        .onChange(of: trigger) { _, newValue in
+            AppEnvironment.shared.preferences.captureTrigger = newValue
+            AppEnvironment.shared.setupDidChange()
+        }
     }
 
-    // MARK: Pieces
+    private func advance() {
+        if step == .trigger, AppEnvironment.shared.preferences.captureTrigger == .undecided {
+            // Leaving the chooser with the preselected trigger counts as choosing it.
+            AppEnvironment.shared.preferences.captureTrigger = trigger
+        }
+        if isLastPage {
+            onFinish()
+        } else {
+            withAnimation(reduceMotion ? nil : Brand.Motion.settle) { page += 1 }
+        }
+    }
 
-    /// Fills the page when it fits; scrolls at large Dynamic Type sizes.
-    private func pageView(_ item: Page) -> some View {
+    // MARK: Pages
+
+    private var isAccessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
+
+    @ViewBuilder
+    private func pageView(_ step: Step) -> some View {
+        switch step {
+        case .welcome:
+            heroPage(
+                visual: .mascot,
+                title: "Your clipboard remembers.",
+                body: "Copy anything. Press once to save it, press again to bring it back. Text, links and images."
+            )
+        case .trigger:
+            formPage(
+                title: "How will you call Klypst?",
+                body: "One shortcut does everything; this is only the button that runs it. Change it any time."
+            ) {
+                TriggerPickerView(selection: $trigger)
+                Text("More options, like the Lock Screen and Siri, are in Setup.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.brandInkSecondary)
+                    .padding(.top, 4)
+            }
+        case .setup:
+            formPage(
+                title: "Two minutes, once.",
+                body: "Add the shortcut and assign it. Klypst ticks the last step itself the first time it runs. You can finish this later from History."
+            ) {
+                SetupChecklistView(embedded: true)
+            }
+        case .privacy:
+            heroPage(
+                visual: .glyph("lock"),
+                title: "Private by default.",
+                body: "Your clipboard history stays on your iPhone. Clips you copy from Klypst don’t leave it either. No account. No tracking."
+            )
+        }
+    }
+
+    private enum Visual {
+        case mascot
+        case glyph(String)
+    }
+
+    /// A picture and a promise. Fills the page when it fits; scrolls at large type sizes.
+    private func heroPage(visual: Visual, title: String, body: String) -> some View {
         ViewThatFits(in: .vertical) {
             VStack(alignment: .leading, spacing: 0) {
                 Spacer(minLength: 24)
-                visual(item)
+                visualView(visual)
                 Spacer(minLength: 24)
-                copyBlock(item)
+                copyBlock(title: title, body: body)
+                    .padding(.bottom, 24)
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    visual(item)
-                    copyBlock(item)
+                    visualView(visual)
+                    copyBlock(title: title, body: body)
                 }
-                .padding(.top, 16)
+                .padding(.vertical, 16)
             }
         }
         .padding(.horizontal, 28)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 
-    private var isAccessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
+    /// A title and interactive content below it, always scrollable.
+    private func formPage<Content: View>(title: String, body: String, @ViewBuilder content: () -> Content) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                copyBlock(title: title, body: body)
+                content()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 16)
+        }
+        .scrollIndicators(.hidden)
+    }
 
-    private func visual(_ item: Page) -> some View {
+    private func visualView(_ visual: Visual) -> some View {
         HStack {
             Spacer()
-            switch item.visual {
+            switch visual {
             case .mascot:
                 MascotView(height: isAccessibilitySize ? 140 : 230)
                     .scaleEffect(mascotShown ? 1 : 0.9)
@@ -119,66 +176,31 @@ struct OnboardingView: View {
         }
     }
 
-    private func copyBlock(_ item: Page) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(item.title)
+    private func copyBlock(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
                 .font(isAccessibilitySize ? .title.bold() : .largeTitle.bold())
                 .kerning(-0.5)
                 .foregroundStyle(Color.brandInk)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(item.body)
+            Text(body)
                 .font(isAccessibilitySize ? .body : .title3)
                 .foregroundStyle(Color.brandInkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
-                .padding(.bottom, item.link == nil ? 24 : 16)
-            if let link = item.link {
-                Group {
-                    if link.url.isFileURL {
-                        ShareLink(item: link.url, preview: SharePreview("Klypst shortcut", image: Image(.mascotSmall))) {
-                            Label(link.title, systemImage: "plus.app").font(.body.weight(.semibold))
-                        }
-                    } else {
-                        SwiftUI.Link(destination: link.url) {
-                            Label(link.title, systemImage: "plus.app").font(.body.weight(.semibold))
-                        }
-                    }
-                }
-                .buttonStyle(.bordered)
-                .tint(.accentColor)
-                .padding(.bottom, 24)
-                .accessibilityHint("Shares the ready-made Action Button shortcut. Choose Shortcuts, then Add Shortcut.")
-            }
         }
+        .accessibilityElement(children: .combine)
     }
 
     private var pageIndicator: some View {
         HStack(spacing: 6) {
-            ForEach(pages.indices, id: \.self) { index in
+            ForEach(Step.allCases, id: \.rawValue) { item in
                 Capsule()
-                    .fill(index == page ? Color.accentColor : Color.brandSeparator)
-                    .frame(width: index == page ? 22 : 8, height: 8)
+                    .fill(item.rawValue == page ? Color.accentColor : Color.brandSeparator)
+                    .frame(width: item.rawValue == page ? 22 : 8, height: 8)
                     .animation(reduceMotion ? nil : Brand.Motion.settle, value: page)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Page \(page + 1) of \(pages.count)")
-    }
-
-    private struct Page {
-        enum Visual {
-            case mascot
-            case glyph(String)
-        }
-
-        struct Link: Hashable {
-            let title: String
-            let url: URL
-        }
-
-        let visual: Visual
-        let title: String
-        let body: String
-        var link: Link? = nil
+        .accessibilityLabel("Page \(page + 1) of \(Step.allCases.count)")
     }
 }

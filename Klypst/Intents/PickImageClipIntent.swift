@@ -47,6 +47,7 @@ struct PickImageClipIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
+        environment.recordShortcutRun()
 
         if let data = await ClipFile.imageData(in: saveFirst) {
             _ = try? await repository.save(.image(data, via: .intent))

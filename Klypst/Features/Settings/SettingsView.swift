@@ -9,6 +9,12 @@ struct SettingsView: View {
     @State private var clipCount: Int?
     @State private var showDeleteAllConfirmation = false
     @State private var showOnboarding = false
+    @State private var setupProgress = AppEnvironment.shared.preferences.setupProgress
+
+    private var setupValue: String {
+        if setupProgress.isComplete { return setupProgress.trigger.displayName }
+        return "\(setupProgress.completedCount) of \(SetupProgress.stepCount)"
+    }
 
     var body: some View {
         NavigationStack {
@@ -52,6 +58,13 @@ struct SettingsView: View {
                     }
 
                     Section {
+                        NavigationLink { SetupChecklistView() } label: {
+                            LabeledContent {
+                                Text(setupValue)
+                            } label: {
+                                Label("Trigger & Setup", systemImage: "checklist")
+                            }
+                        }
                         NavigationLink { HelpView() } label: {
                             Label("Help & Setup", systemImage: "questionmark.circle")
                         }
@@ -95,6 +108,7 @@ struct SettingsView: View {
             .brandGroupedCanvas()
             .navigationTitle("Settings")
             .task(id: state.changeToken) {
+                setupProgress = AppEnvironment.shared.preferences.setupProgress
                 clipCount = try? await AppEnvironment.shared.repository?.count()
             }
             .confirmationDialog("Delete all clips?", isPresented: $showDeleteAllConfirmation, titleVisibility: .visible) {
