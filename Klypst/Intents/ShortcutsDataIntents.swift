@@ -93,7 +93,7 @@ struct GetClipImageIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         guard let repository = AppEnvironment.shared.repository else { throw KlypstIntentError.storeUnavailable }
         guard let content = try await repository.clip(id: clip.id) else { throw KlypstIntentError.clipNotFound }
-        let file = try ClipImageFile.make(from: content)
+        let file = try ClipFile.image(from: content)
         try? await repository.markUsed(id: clip.id)
         return .result(value: file)
     }

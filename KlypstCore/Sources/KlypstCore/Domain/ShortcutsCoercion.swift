@@ -1,19 +1,5 @@
 import Foundation
 
-/// What the general pasteboard is holding, from `UIPasteboard`'s `has*` flags only.
-/// Those flags are metadata: reading them never triggers the system paste notice.
-public struct ClipboardAvailability: Sendable, Hashable {
-    public let hasText: Bool
-    public let hasImage: Bool
-
-    public init(hasText: Bool, hasImage: Bool) {
-        self.hasText = hasText
-        self.hasImage = hasImage
-    }
-
-    public static let unknown = ClipboardAvailability(hasText: true, hasImage: false)
-}
-
 /// Guards against Shortcuts' type coercion. When the Clipboard variable holds an image
 /// but the shortcut wires it into a text parameter, Shortcuts substitutes a name for the
 /// item — "Clipboard 11 Sep 2026 at 2.33 pm" (with or without an extension), "Klypst
@@ -36,14 +22,13 @@ public enum ShortcutsCoercion {
 
     /// The text worth saving, or nil when it is empty or a name Shortcuts invented for an image.
     ///
-    /// The pasteboard flags lead, not the string: an image on the clipboard with no text
-    /// at all means any string that arrived is an artifact. When the clipboard holds both,
-    /// only a generated-looking name is rejected, so real text is never silently dropped.
-    public static func textToSave(_ raw: String, clipboard: ClipboardAvailability = .unknown) -> String? {
+    /// Deliberately judged from the string alone. `UIPasteboard`'s `has*` flags look like a
+    /// better signal, but they are not dependable from an intent running in the background,
+    /// which is exactly when this runs. The caller's real defence is to ignore this string
+    /// entirely whenever Shortcuts also handed over an image.
+    public static func textToSave(_ raw: String) -> String? {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return nil }
-        guard clipboard.hasImage else { return text }
-        if !clipboard.hasText { return nil }
         return looksLikeGeneratedImageName(text) ? nil : text
     }
 

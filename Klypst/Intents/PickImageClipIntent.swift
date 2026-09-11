@@ -69,7 +69,7 @@ struct PickImageClipIntent: AppIntent {
         }
 
         guard let content = try await repository.clip(id: chosen.id) else { throw KlypstIntentError.clipNotFound }
-        let file = try ClipImageFile.make(from: content)
+        let file = try ClipFile.image(from: content)
         try? await repository.markUsed(id: chosen.id)
         environment.state.bumpChangeToken()
         KlypstLog.intents.info("Pick image intent returned an image clip.")
@@ -77,10 +77,24 @@ struct PickImageClipIntent: AppIntent {
     }
 }
 
-/// Builds the `IntentFile` Shortcuts receives for an image clip. The file name
-/// carries no clip content, only the format.
-enum ClipImageFile {
+/// Builds the `IntentFile` Shortcuts receives for a clip. Text and links come back as a
+/// plain-text file so a single return type can carry either; Copy to Clipboard turns that
+/// back into text. File names carry no clip content, only the format.
+enum ClipFile {
     static func make(from content: ClipContent) throws -> IntentFile {
+        switch content.kind {
+        case .image:
+            return try image(from: content)
+        case .text:
+            guard let value = content.text, !value.isEmpty else { throw KlypstIntentError.clipNotFound }
+            return plainText(value)
+        case .url:
+            guard let url = content.url else { throw KlypstIntentError.clipNotFound }
+            return plainText(url.absoluteString)
+        }
+    }
+
+    static func image(from content: ClipContent) throws -> IntentFile {
         guard content.kind == .image else { throw KlypstIntentError.notAnImage }
         guard let payloadURL = content.payloadURL,
               let data = try? Data(contentsOf: payloadURL),
@@ -88,5 +102,9 @@ enum ClipImageFile {
         else { throw KlypstIntentError.clipNotFound }
         let fileExtension = info.contentType.preferredFilenameExtension ?? "png"
         return IntentFile(data: data, filename: "Klypst Clip.\(fileExtension)", type: info.contentType)
+    }
+
+    private static func plainText(_ value: String) -> IntentFile {
+        IntentFile(data: Data(value.utf8), filename: "Klypst Clip.txt", type: .utf8PlainText)
     }
 }

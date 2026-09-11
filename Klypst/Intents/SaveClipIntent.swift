@@ -46,7 +46,7 @@ struct SaveClipIntent: AppIntent {
         let input: ClipInput
         if let image, let data = try? await image.data, !data.isEmpty {
             input = .image(data, via: .intent)
-        } else if let text = ShortcutsCoercion.textToSave(content, clipboard: AppEnvironment.shared.clipboard.availability()) {
+        } else if let text = ShortcutsCoercion.textToSave(content) {
             input = .text(text, via: .intent)
         } else {
             KlypstLog.intents.info("Save intent received nothing to save.")

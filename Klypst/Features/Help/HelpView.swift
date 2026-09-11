@@ -6,7 +6,7 @@ struct HelpView: View {
         List {
             Group {
                 Section {
-                    Text("Copy text or a link and press the Action Button to save it. Press again to pick any earlier clip and paste it, without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts. Images have their own shortcut, below.")
+                    Text("Copy anything — text, a link or an image — and press the Action Button to save it. Press again to pick any earlier clip and paste it, without leaving the app you’re in. One shortcut covers all three. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts.")
                     if let file = KlypstLinks.actionButtonShortcutFile {
                         ShareLink(item: file, preview: SharePreview("Klypst shortcut", image: Image(.mascotSmall))) {
                             Label("Add the Klypst shortcut", systemImage: "plus.app")
@@ -16,7 +16,7 @@ struct HelpView: View {
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .accessibilityHint("Shares the ready-made shortcut. Choose Shortcuts in the sheet, then tap Add Shortcut.")
                         step(1, "In the sheet, choose **Shortcuts**, then tap **Add Shortcut**.")
-                        step(2, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose **Klypst**.")
+                        step(2, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose **Klypst**. Prefer a double-tap on the back? Use **Settings → Accessibility → Touch → Back Tap** instead.")
                         if let link = KlypstLinks.actionButtonShortcut {
                             Link("Shortcuts not in the sheet? Open the iCloud link instead.", destination: link)
                                 .font(.subheadline)
@@ -27,7 +27,7 @@ struct HelpView: View {
                     } else {
                         Text("Build this once:")
                         manualRecipeSteps
-                        step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
+                        step(7, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
                         ShortcutsLink()
                     }
                 } header: {
@@ -37,17 +37,14 @@ struct HelpView: View {
                 }
 
                 Section {
-                    Text("Images get their own shortcut, on **Back Tap**. Add it below, then go to **Settings → Accessibility → Touch → Back Tap → Double Tap** and choose **Klypst Images**.")
+                    Text("The Klypst shortcut already handles images: copy one, press the Action Button, and it’s saved and listed on the card with a thumbnail. Pick it later and it goes back on your clipboard ready to paste.")
+                    Text("If you’d rather keep images on their own trigger, add the shortcut below and assign it to **Back Tap** (Settings → Accessibility → Touch). It skips text and shows only your images.")
                     if let file = KlypstLinks.imageShortcutFile {
                         ShareLink(item: file, preview: SharePreview("Klypst Images shortcut", image: Image(.mascotSmall))) {
                             Label("Add the image shortcut", systemImage: "photo.badge.plus")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.brandPrimary)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .accessibilityHint("Shares the ready-made shortcut. Choose Shortcuts in the sheet, then tap Add Shortcut.")
                     }
-                    Text("Copy an image, then double-tap the back of your iPhone: the image is saved and your saved images appear. Tap one to put it on the clipboard, or tap the one you just copied if you only wanted to save it.")
                 } header: {
                     Text("Images")
                 }
@@ -122,9 +119,10 @@ struct HelpView: View {
     private var manualRecipeSteps: some View {
         step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
         step(2, "Add **Get Clipboard**.")
-        step(3, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it and check that **Save First** shows a **Clipboard** token and **Clip** is empty.")
-        step(4, "Add **Copy to Clipboard**. Its field should show the text from Pick a Clip; if not, tap it and choose that variable.")
-        step(5, "Name it **Klypst** and tap Done.")
+        step(3, "Add **Get Images from Input** and set its input to the **Clipboard** variable. It returns the image when you copied one, and nothing when you copied text.")
+        step(4, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it: **Save First** should show the **Clipboard** token, **Save Image First** should show **Images**, and **Clip** stays empty.")
+        step(5, "Add **Copy to Clipboard** and set its field to the **Pick a Clip** variable.")
+        step(6, "Name it **Klypst** and tap Done.")
     }
 
     private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
