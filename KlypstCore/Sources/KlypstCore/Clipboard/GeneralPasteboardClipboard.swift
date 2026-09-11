@@ -7,6 +7,16 @@ import UniformTypeIdentifiers
 public struct GeneralPasteboardClipboard: SystemClipboard {
     public init() {}
 
+    /// What the pasteboard holds, from the `has*` flags only. Never triggers the paste notice.
+    @MainActor
+    public func availability() -> ClipboardAvailability {
+        let pasteboard = UIPasteboard.general
+        return ClipboardAvailability(
+            hasText: pasteboard.hasStrings || pasteboard.hasURLs,
+            hasImage: pasteboard.hasImages
+        )
+    }
+
     @MainActor
     public func readUserInitiatedContent() async throws -> ClipInput? {
         let pasteboard = UIPasteboard.general

@@ -82,7 +82,7 @@ struct PickClipIntent: AppIntent {
         let environment = AppEnvironment.shared
         guard let repository = environment.repository else { throw KlypstIntentError.storeUnavailable }
 
-        if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst) {
+        if let saveFirst, let text = ShortcutsCoercion.textToSave(saveFirst, clipboard: environment.clipboard.availability()) {
             _ = try? await repository.save(.text(text, via: .intent))
             environment.markClipboardSeen()
             environment.state.bumpChangeToken()
