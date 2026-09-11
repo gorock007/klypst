@@ -72,7 +72,10 @@ public struct GeneralPasteboardClipboard: SystemClipboard {
     /// `localOnly` keeps the item off Universal Clipboard; `expirationDate` lets iOS
     /// clear it without Klypst having to run again.
     private static func pasteboardOptions(_ options: PasteboardWriteOptions) -> [UIPasteboard.OptionsKey: Any] {
-        var result: [UIPasteboard.OptionsKey: Any] = [.localOnly: options.isLocalOnly]
+        var result: [UIPasteboard.OptionsKey: Any] = [:]
+        if options.isLocalOnly {
+            result[.localOnly] = true
+        }
         if let date = options.expirationDate() {
             result[.expirationDate] = date
         }

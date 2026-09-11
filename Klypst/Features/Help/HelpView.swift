@@ -6,7 +6,7 @@ struct HelpView: View {
         List {
             Group {
                 Section {
-                    Text("Copy anything, press the Action Button to save it. Press again to pick any earlier clip and paste it — without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts.")
+                    Text("Copy anything — text, a link or an image — and press the Action Button to save it. Press again to pick any earlier clip and paste it, without leaving the app you’re in. Klypst can’t read or write your clipboard in the background, so the Shortcuts app does those two parts.")
                     if let link = KlypstLinks.actionButtonShortcut {
                         Link(destination: link) {
                             Label("Add the Klypst shortcut", systemImage: "plus.app")
@@ -23,7 +23,7 @@ struct HelpView: View {
                     } else {
                         Text("Build this once:")
                         manualRecipeSteps
-                        step(6, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
+                        step(9, "Go to **Settings → Action Button**, swipe to **Shortcut**, and choose the shortcut you just made.")
                         ShortcutsLink()
                     }
                 } header: {
@@ -33,7 +33,8 @@ struct HelpView: View {
                 }
 
                 Section {
-                    Text("Save images with the Share Sheet, or copy an image and press the Action Button: the save step keeps it, and the picker lists only text and links. To paste an image again, use a second shortcut, **Pick an Image Clip** followed by **Copy to Clipboard**, and run it from **Back Tap** (Settings → Accessibility → Touch) or a Control Center shortcut button.")
+                    Text("The Action Button shortcut saves images too, and lists them on the card with a thumbnail. When you pick an image, Klypst opens for a moment to put it on your clipboard — iOS doesn’t let Shortcuts receive an image from the picker — then swipe back and paste.")
+                    Text("Prefer images without opening Klypst? Add a second shortcut, **Pick an Image Clip** followed by **Copy to Clipboard**, and run it from **Back Tap** (Settings → Accessibility → Touch) or a Control Center shortcut button.")
                     if let link = KlypstLinks.imageShortcut {
                         Link(destination: link) {
                             Label("Add the image shortcut", systemImage: "photo.badge.plus")
@@ -107,14 +108,18 @@ struct HelpView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// The Action Button recipe, for people who prefer to build it by hand.
+    /// The Action Button recipe, for people who prefer to build it by hand. Mirrors
+    /// `KlypstLinks.actionButtonShortcut` exactly.
     @ViewBuilder
     private var manualRecipeSteps: some View {
         step(1, "Open the **Shortcuts** app and tap **+** to make a new shortcut.")
         step(2, "Add **Get Clipboard**.")
-        step(3, "Add **Pick a Clip** (search for Klypst). Tap the arrow to expand it and check that **Save First** shows a **Clipboard** token and **Clip** is empty. If not, tap Save First → Select Variable → Clipboard, and clear Clip.")
-        step(4, "Add **Copy to Clipboard**. Its field should show the text from Pick a Clip; if not, tap it and choose that variable.")
-        step(5, "Name it **Klypst** and tap Done.")
+        step(3, "Add **Get Images from Input** and set its input to the **Clipboard** variable. It returns the image if one was copied, and nothing otherwise.")
+        step(4, "Add **If**. Set its input to **Images from Input** and the condition to **has any value**.")
+        step(5, "Inside the If, add **Pick a Clip** (search for Klypst). Expand it: set **Save Image First** to **Images from Input**, and leave **Save First** and **Clip** empty.")
+        step(6, "Under **Otherwise**, add another **Pick a Clip**. Expand it: set **Save First** to the **Clipboard** variable, and leave **Clip** empty.")
+        step(7, "After **End If**, add another **If**: input **If Result**, condition **has any value**. Inside it add **Copy to Clipboard** and set it to **If Result**.")
+        step(8, "Name it **Klypst** and tap Done.")
     }
 
     private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {

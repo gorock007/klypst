@@ -6,10 +6,13 @@ import Foundation
 /// to the Klypst Apple Account, tap Share → Copy iCloud Link, and paste the URL here.
 /// While a link is nil the Help screen shows the manual steps only.
 enum KlypstLinks {
-    /// Get Clipboard → Pick a Clip (Save First: Clipboard) → Copy to Clipboard.
-    /// Assigned to the Action Button. Saves the last copy, then pastes any earlier clip.
-    static let actionButtonShortcut: URL? = nil
+    /// The one-press recipe for the Action Button (text, links and images):
+    /// Get Clipboard → Get Images from Input → If images: Pick a Clip (Save Image First) /
+    /// Otherwise: Pick a Clip (Save First: Clipboard) → If result has any value: Copy to Clipboard.
+    /// iCloud links are snapshots: after changing the shortcut, share it again and replace the URL.
+    static let actionButtonShortcut: URL? = URL(string: "https://www.icloud.com/shortcuts/19bbb43d509a41b79a772394531d95eb")
 
-    /// Pick an Image Clip → Copy to Clipboard. For Back Tap or a Control Center shortcut.
-    static let imageShortcut: URL? = nil
+    /// Pick an Image Clip → Copy to Clipboard. Optional: pastes an image without opening
+    /// Klypst, for Back Tap or a Control Center shortcut button.
+    static let imageShortcut: URL? = URL(string: "https://www.icloud.com/shortcuts/41380939ae51405f958fe4af6be01063")
 }
